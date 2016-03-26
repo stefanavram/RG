@@ -1,6 +1,12 @@
 package com.roadgems.testaccelerometer;
 
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -9,15 +15,23 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class MainActivity extends Activity implements SensorEventListener {
+    String http = "http://roadgems.ml/create_pothole.php";
     private ProgressDialog progress;
     private float mLastX, mLastY, mLastZ;
     private boolean mInitialized;
@@ -40,6 +55,11 @@ public class MainActivity extends Activity implements SensorEventListener {
     protected ArrayList<String> xCoord = new ArrayList<>();
     protected ArrayList<String> yCoord = new ArrayList<>();
     protected ArrayList<String> zCoord = new ArrayList<>();
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     // Button btnS = (Button) findViewById(R.id.btnSave);
 
@@ -60,6 +80,9 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
 
         });
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     private String makeStringFromSensorData(ArrayList<String> list) {
@@ -174,7 +197,40 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
     public void postData(View view) {
-        new PostClass(this).execute();
+
+        new PostClass(this).execute("1", "2", "Put");
+    }
+    
+    public String createPostParamsFromJson(JSONObject jsonobj) {
+        StringBuilder postData = new StringBuilder();
+        Iterator<?> keys = jsonobj.keys();
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            try {
+                if (postData.length() != 0) postData.append('&');
+                postData.append(URLEncoder.encode(key, "UTF-8"));
+                postData.append('=');
+                postData.append(URLEncoder.encode(String.valueOf(jsonobj.get(key)), "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return postData.toString();
+    }
+
+    public JSONObject createJSONHole(Integer lat, Integer lng, String pothole) {
+        JSONObject jsonobj = new JSONObject();
+
+        try {
+            jsonobj.put("lat", lat);
+            jsonobj.put("lng", lng);
+            jsonobj.put("pothole", pothole);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return jsonobj;
     }
 
     private class PostClass extends AsyncTask<String, Void, Void> {
@@ -194,27 +250,15 @@ public class MainActivity extends Activity implements SensorEventListener {
         @Override
         protected Void doInBackground(String... params) {
             try {
-                JSONObject jsonobj = new JSONObject();
-                jsonobj.put("lat", 22);
-                jsonobj.put("lng", 12);
-                jsonobj.put("pothole", "Groapa mare");
-
-                StringBuilder postData = new StringBuilder();
-                Iterator<?> keys = jsonobj.keys();
-                while (keys.hasNext()) {
-                    String key = (String) keys.next();
-                    if (postData.length() != 0) postData.append('&');
-                    postData.append(URLEncoder.encode(key, "UTF-8"));
-                    postData.append('=');
-                    postData.append(URLEncoder.encode(String.valueOf( jsonobj.get(key)), "UTF-8"));
-                }
-                byte[] postDataBytes = postData.toString().getBytes("UTF-8");
-
-
+                Integer lat = Integer.valueOf(params[0]);
+                Integer lng = Integer.valueOf(params[1]);
+                String hole = params[2];
+                JSONObject jsonobj = createJSONHole(lat, lng, hole);
+                byte[] postDataBytes = createPostParamsFromJson(jsonobj).getBytes("UTF-8");
                 final TextView outputView = (TextView) findViewById(R.id.showOutput);
-                URL url = new URL("http://roadgems.ml/create_pothole.php");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
+                URL url = new URL(http);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                 connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
@@ -231,19 +275,18 @@ public class MainActivity extends Activity implements SensorEventListener {
                 output.append(System.getProperty("line.separator") + "Request Parameters " + jsonobj.toString());
                 output.append(System.getProperty("line.separator") + "Response Code " + responseCode);
                 output.append(System.getProperty("line.separator") + "Type " + "POST");
-//              BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//                String line = "";
-//                StringBuilder responseOutput = new StringBuilder();
-//                System.out.println("output===============" + br);
-//                while ((line = br.readLine()) != null) {
-//                    responseOutput.append(line);
-//                }
-//                br.close();
-//
-//                output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
+                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line = "";
+                StringBuilder responseOutput = new StringBuilder();
+                System.out.println("output===============" + br);
+                while ((line = br.readLine()) != null) {
+                    responseOutput.append(line);
+                }
+                br.close();
+
+                output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
 
                 MainActivity.this.runOnUiThread(new Runnable() {
-
                     @Override
                     public void run() {
                         outputView.setText(output);
@@ -257,56 +300,8 @@ public class MainActivity extends Activity implements SensorEventListener {
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
             return null;
         }
     }
 }
-//JSONObject jsonobj = new JSONObject();
-//jsonobj.put("lat", 22);
-//        jsonobj.put("lng", 12);
-//        jsonobj.put("pothole", "Groapa mare");
-//
-//final TextView outputView = (TextView) findViewById(R.id.showOutput);
-//        URL url = new URL("http://roadgems.ml/create_product.php");
-//        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-//
-//        connection.setRequestMethod("POST");
-//        connection.setRequestProperty("USER-AGENT", "Mozilla/5.0");
-//        connection.setRequestProperty("ACCEPT-LANGUAGE", "en-US,en;0.5");
-//        connection.setDoOutput(true);
-//        DataOutputStream dStream = new DataOutputStream(connection.getOutputStream());
-//        dStream.writeBytes(jsonobj.toString());
-//        dStream.flush();
-//        dStream.close();
-//        int responseCode = connection.getResponseCode();
-//
-//final StringBuilder output = new StringBuilder("Request URL " + url);
-//        output.append(System.getProperty("line.separator") + "Request Parameters " +jsonobj.toString());
-//        output.append(System.getProperty("line.separator") + "Response Code " + responseCode);
-//        output.append(System.getProperty("line.separator") + "Type " + "POST");
-//        BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//        String line = "";
-//        StringBuilder responseOutput = new StringBuilder();
-//        System.out.println("output===============" + br);
-//        while ((line = br.readLine()) != null) {
-//        responseOutput.append(line);
-//        }
-//        br.close();
-//
-//        output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
-//
-//        MainActivity.this.runOnUiThread(new Runnable() {
-//
-//@Override
-//public void run() {
-//        outputView.setText(output);
-//        progress.dismiss();
-//        }
-//        });
-//
-//
-//
-
