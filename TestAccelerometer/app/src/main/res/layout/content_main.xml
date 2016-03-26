@@ -87,4 +87,20 @@
         android:id="@+id/map"
         android:layout_gravity="center_horizontal" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="post"
+        android:id="@+id/post"
+        android:onClick="postData"
+        android:layout_gravity="center_horizontal" />
+
+    <TextView
+        android:layout_width="273dp"
+        android:layout_height="259dp"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="sss"
+        android:id="@+id/showOutput"
+        android:layout_gravity="center_horizontal" />
+
 </LinearLayout>
