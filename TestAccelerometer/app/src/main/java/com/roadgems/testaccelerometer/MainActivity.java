@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.json.JSONException;
@@ -45,6 +46,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class MainActivity extends Activity implements SensorEventListener {
+
+
     String http = "http://roadgems.ml/create_pothole.php";
     private ProgressDialog progress;
     private float mLastX, mLastY, mLastZ;
@@ -55,6 +58,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     protected ArrayList<String> xCoord = new ArrayList<>();
     protected ArrayList<String> yCoord = new ArrayList<>();
     protected ArrayList<String> zCoord = new ArrayList<>();
+
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -80,6 +84,15 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
 
         });
+
+        Button btnGps = (Button) findViewById(R.id.btnGps);
+        btnGps.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                Intent myIntent = new Intent(view.getContext(), GpsActivity.class);
+                startActivityForResult(myIntent, 0);
+            }
+
+        });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
@@ -93,7 +106,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
         return finalFrom;
     }
-
     public void saveToTxt(View view) {
 
         String state = Environment.getExternalStorageState();
@@ -124,7 +136,6 @@ public class MainActivity extends Activity implements SensorEventListener {
             Toast.makeText(getApplicationContext(), "SD card not found", Toast.LENGTH_LONG).show();
         }
     }
-
     @NonNull
     private File createDir(File root) {
         File Dir = new File(root.getAbsolutePath() + "/RoadGems");
@@ -133,7 +144,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
         return Dir;
     }
-
     private void writeExternalSD(File file, String msg) throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream(file);
         fileOutputStream.write(msg.getBytes());
@@ -200,7 +210,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         new PostClass(this).execute("1", "2", "Put");
     }
-    
     public String createPostParamsFromJson(JSONObject jsonobj) {
         StringBuilder postData = new StringBuilder();
         Iterator<?> keys = jsonobj.keys();
@@ -219,19 +228,24 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
         return postData.toString();
     }
-
     public JSONObject createJSONHole(Integer lat, Integer lng, String pothole) {
         JSONObject jsonobj = new JSONObject();
 
         try {
-            jsonobj.put("lat", lat);
-            jsonobj.put("lng", lng);
+            GpsActivity gps = new GpsActivity();
+
+            /**aici am modificat**/
+            jsonobj.put("lat", gps.getLat());
+            jsonobj.put("lng", gps.getLng());
             jsonobj.put("pothole", pothole);
         } catch (JSONException e) {
             e.printStackTrace();
         }
         return jsonobj;
     }
+
+
+
 
     private class PostClass extends AsyncTask<String, Void, Void> {
 
@@ -303,5 +317,8 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
             return null;
         }
+
+
+
     }
 }
