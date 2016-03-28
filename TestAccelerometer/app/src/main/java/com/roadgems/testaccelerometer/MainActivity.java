@@ -45,7 +45,28 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class MainActivity extends Activity implements SensorEventListener {
+
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+
+import android.app.Activity;
+import android.location.Location;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class MainActivity extends Activity implements SensorEventListener,ConnectionCallbacks,
+        OnConnectionFailedListener {
 
 
     String http = "http://roadgems.ml/create_pothole.php";
@@ -59,13 +80,17 @@ public class MainActivity extends Activity implements SensorEventListener {
     protected ArrayList<String> yCoord = new ArrayList<>();
     protected ArrayList<String> zCoord = new ArrayList<>();
 
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 1000;
+    private Location mLastLocation;
+    // Google client to interact with Google API
+    private GoogleApiClient mGoogleApiClient;
     private GoogleApiClient client;
 
-    // Button btnS = (Button) findViewById(R.id.btnSave);
+
+    TextView outputView;
+    private double lat;
+    private double lng;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,6 +100,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        outputView= (TextView) findViewById(R.id.showOutput);
 
         Button map = (Button) findViewById(R.id.map);
         map.setOnClickListener(new View.OnClickListener() {
@@ -85,17 +111,69 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         });
 
+
+        if (checkPlayServices()) {
+
+            // Building the GoogleApi client
+            buildGoogleApiClient();
+        }
+
+
         Button btnGps = (Button) findViewById(R.id.btnGps);
         btnGps.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                Intent myIntent = new Intent(view.getContext(), GpsActivity.class);
-                startActivityForResult(myIntent, 0);
+//                Intent myIntent = new Intent(view.getContext(), GpsActivity.class);
+//                startActivityForResult(myIntent, 0);
+                displayLocation();
             }
 
         });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+    }
+
+    private void displayLocation() {
+
+        mLastLocation = LocationServices.FusedLocationApi
+                .getLastLocation(mGoogleApiClient);
+
+        if (mLastLocation != null) {
+            double latitude = mLastLocation.getLatitude();
+            double longitude = mLastLocation.getLongitude();
+            this.lat=latitude;
+            this.lng=longitude;
+            outputView.setText(latitude + ", " + longitude);
+
+        } else {
+
+            outputView.setText("(Couldn't get the location. Make sure location is enabled on the device)");
+        }
+    }
+
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API).build();
+    }
+
+    private boolean checkPlayServices() {
+        int resultCode = GooglePlayServicesUtil
+                .isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+                GooglePlayServicesUtil.getErrorDialog(resultCode, this,
+                        PLAY_SERVICES_RESOLUTION_REQUEST).show();
+            } else {
+                Toast.makeText(getApplicationContext(),
+                        "This device is not supported.", Toast.LENGTH_LONG)
+                        .show();
+                finish();
+            }
+            return false;
+        }
+        return true;
     }
 
     private String makeStringFromSensorData(ArrayList<String> list) {
@@ -152,9 +230,25 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
 
+    public double getLat(){
+        return this.lat;
+    }
+    public double getLng(){
+        return this.lng;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.connect();
+        }
+    }
+
     protected void onResume() {
         super.onResume();
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        checkPlayServices();
     }
 
     protected void onPause() {
@@ -232,11 +326,11 @@ public class MainActivity extends Activity implements SensorEventListener {
         JSONObject jsonobj = new JSONObject();
 
         try {
-            GpsActivity gps = new GpsActivity();
+
 
             /**aici am modificat**/
-            jsonobj.put("lat", gps.getLat());
-            jsonobj.put("lng", gps.getLng());
+            jsonobj.put("lat", this.getLat());
+            jsonobj.put("lng", this.getLng());
             jsonobj.put("pothole", pothole);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -244,7 +338,24 @@ public class MainActivity extends Activity implements SensorEventListener {
         return jsonobj;
     }
 
+    @Override
+    public void onConnected(Bundle bundle) {
 
+        displayLocation();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = "
+                + connectionResult.getErrorCode());
+    }
 
 
     private class PostClass extends AsyncTask<String, Void, Void> {
@@ -269,7 +380,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                 String hole = params[2];
                 JSONObject jsonobj = createJSONHole(lat, lng, hole);
                 byte[] postDataBytes = createPostParamsFromJson(jsonobj).getBytes("UTF-8");
-                final TextView outputView = (TextView) findViewById(R.id.showOutput);
+                //final TextView outputView = (TextView) findViewById(R.id.showOutput);
 
                 URL url = new URL(http);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
