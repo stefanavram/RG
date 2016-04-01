@@ -92,6 +92,20 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
     private double lat;
     private double lng;
 
+    boolean stopFlag = false;
+    boolean startFlag = false;
+    boolean isFirstSet = true;
+    boolean isFileCreated=false;
+    File myFile;
+    FileOutputStream fOut;
+    OutputStreamWriter myOutWriter;
+    BufferedWriter myBufferedWriter;
+    PrintWriter myPrintWriter;
+
+    float x;
+    float y;
+    float z;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,26 +125,62 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
 
         });
 
-
         if (checkPlayServices()) {
 
             // Building the GoogleApi client
             buildGoogleApiClient();
         }
 
-
         Button btnGps = (Button) findViewById(R.id.btnGps);
         btnGps.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-//                Intent myIntent = new Intent(view.getContext(), GpsActivity.class);
-//                startActivityForResult(myIntent, 0);
+
                 displayLocation();
             }
 
         });
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
+
+        Button btnSave = (Button) findViewById(R.id.btnSave);
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try{
+                   fOut = new FileOutputStream(myFile);
+                   myOutWriter = new OutputStreamWriter(fOut);
+                   myBufferedWriter = new BufferedWriter(myOutWriter);
+                   myPrintWriter = new PrintWriter(myBufferedWriter);
+                   Toast.makeText(getBaseContext(), "Start saving data", Toast.LENGTH_LONG).show();
+
+               } catch (Exception e) {
+                    Toast.makeText(getBaseContext(),"No file",Toast.LENGTH_LONG).show();
+
+                }finally {
+                    startFlag=true;
+                }
+
+            }
+        });
+
+        Button btnStop = (Button) findViewById(R.id.btnStop);
+        btnStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try{
+                    stopFlag=true;
+                    Toast.makeText(getBaseContext(), "Data saved", Toast.LENGTH_SHORT).show();
+                }catch (Exception e){
+                    Toast.makeText(getBaseContext(),e.getMessage(),Toast.LENGTH_LONG).show();
+                }
+            }
+        });
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+    }
+
+    private void createFile() throws IOException {
+        File Root = Environment.getExternalStorageDirectory();
+        File Dir = createDir(Root);
+        myFile = new File(Dir, "save.txt");
+        myFile.createNewFile();
     }
 
     private void displayLocation() {
@@ -150,14 +200,12 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
             outputView.setText("(Couldn't get the location. Make sure location is enabled on the device)");
         }
     }
-
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API).build();
     }
-
     private boolean checkPlayServices() {
         int resultCode = GooglePlayServicesUtil
                 .isGooglePlayServicesAvailable(this);
@@ -176,44 +224,12 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
         return true;
     }
 
-    private String makeStringFromSensorData(ArrayList<String> list) {
-        String finalFrom = null;
-        for (int i = 0; i < list.size(); i++) {
-            finalFrom += list.get(i) + "\n";
+    public void saveToTxt() {
 
-        }
-        return finalFrom;
+        myPrintWriter.append("" + x + "  " + y + "  " + z + "\n");
+        //myPrintWriter.flush();
     }
-    public void saveToTxt(View view) {
 
-        String state = Environment.getExternalStorageState();
-
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File Root = Environment.getExternalStorageDirectory();
-            File Dir = createDir(Root);
-            File save_file = new File(Dir, "save.txt");
-            File file1 = new File(Dir, "xData.txt");
-            File file2 = new File(Dir, "yData.txt");
-            File file3 = new File(Dir, "zData.txt");
-
-            String x_values = makeStringFromSensorData(xCoord);
-            String y_values = makeStringFromSensorData(yCoord);
-            String z_values = makeStringFromSensorData(zCoord);
-
-            try {
-                writeExternalSD(file1, x_values);
-                writeExternalSD(file2, y_values);
-                writeExternalSD(file3, z_values);
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            Toast.makeText(getApplicationContext(), "SD card not found", Toast.LENGTH_LONG).show();
-        }
-    }
     @NonNull
     private File createDir(File root) {
         File Dir = new File(root.getAbsolutePath() + "/RoadGems");
@@ -221,12 +237,6 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
             Dir.mkdir();
         }
         return Dir;
-    }
-    private void writeExternalSD(File file, String msg) throws IOException {
-        FileOutputStream fileOutputStream = new FileOutputStream(file);
-        fileOutputStream.write(msg.getBytes());
-        fileOutputStream.close();
-        Toast.makeText(getApplicationContext(), "Save succeded", Toast.LENGTH_LONG).show();
     }
 
 
@@ -267,37 +277,71 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
         TextView tvY = (TextView) findViewById(R.id.y_axis);
         TextView tvZ = (TextView) findViewById(R.id.z_axis);
 
+        if(startFlag){
 
-        float x = event.values[0];
-        float y = event.values[1];
-        float z = event.values[2];
+            if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+                x= event.values[0];
+                y = event.values[1];
+                z = event.values[2];
+            }
 
-        if (!mInitialized) {
-            mLastX = x;
-            mLastY = y;
-            mLastZ = z;
-            tvX.setText("0.0");
-            tvY.setText("0.0");
-            tvZ.setText("0.0");
-            mInitialized = true;
-        } else {
-            float deltaX = Math.abs(mLastX - x);
-            float deltaY = Math.abs(mLastY - y);
-            float deltaZ = Math.abs(mLastZ - z);
-            if (deltaX < NOISE) deltaX = (float) 0.0;
-            if (deltaY < NOISE) deltaY = (float) 0.0;
-            if (deltaZ < NOISE) deltaZ = (float) 0.0;
-            mLastX = x;
-            mLastY = y;
-            mLastZ = z;
-            tvX.setText(Float.toString(deltaX));
-            xCoord.add("" + deltaX);
-            tvY.setText(Float.toString(deltaY));
-            yCoord.add("" + deltaY);
-            tvZ.setText(Float.toString(deltaZ));
-            zCoord.add("" + deltaZ);
+            for(int i=0; i<1;i++){
+                if(!stopFlag){
+                    saveToTxt();
+                }
+                else{
+                    try{
+                        myOutWriter.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }catch(NullPointerException e){
+                        e.printStackTrace();
+                    }
+
+                    try{
+                        fOut.close();
+                    }catch(IOException e) {
+                        e.printStackTrace();
+                    } catch (NullPointerException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+
 
         }
+
+//        float x = event.values[0];
+//        float y = event.values[1];
+//        float z = event.values[2];
+//
+//        if (!mInitialized) {
+//            mLastX = x;
+//            mLastY = y;
+//            mLastZ = z;
+//            tvX.setText("0.0");
+//            tvY.setText("0.0");
+//            tvZ.setText("0.0");
+//            mInitialized = true;
+//        } else {
+//            float deltaX = Math.abs(mLastX - x);
+//            float deltaY = Math.abs(mLastY - y);
+//            float deltaZ = Math.abs(mLastZ - z);
+//            if (deltaX < NOISE) deltaX = (float) 0.0;
+//            if (deltaY < NOISE) deltaY = (float) 0.0;
+//            if (deltaZ < NOISE) deltaZ = (float) 0.0;
+//            mLastX = x;
+//            mLastY = y;
+//            mLastZ = z;
+//            tvX.setText(Float.toString(deltaX));
+//            xCoord.add("" + deltaX);
+//            tvY.setText(Float.toString(deltaY));
+//            yCoord.add("" + deltaY);
+//            tvZ.setText(Float.toString(deltaZ));
+//            zCoord.add("" + deltaZ);
+//
+//        }
     }
 
     public void postData(View view) {
@@ -327,8 +371,6 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
 
         try {
 
-
-            /**aici am modificat**/
             jsonobj.put("lat", this.getLat());
             jsonobj.put("lng", this.getLng());
             jsonobj.put("pothole", pothole);
