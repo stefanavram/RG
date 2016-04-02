@@ -2,42 +2,48 @@ package com.roadgems.testaccelerometer;
 
 
 import android.Manifest;
-import android.content.pm.PackageManager;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.Uri;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -45,66 +51,41 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-
-import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
-import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-
-import android.app.Activity;
-import android.location.Location;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
-
-public class MainActivity extends Activity implements SensorEventListener,ConnectionCallbacks,
+public class MainActivity extends Activity implements SensorEventListener, ConnectionCallbacks,
         OnConnectionFailedListener {
 
 
-    String http = "http://roadgems.ml/create_pothole.php";
-    private ProgressDialog progress;
-    private float mLastX, mLastY, mLastZ;
-    private boolean mInitialized;
-    private SensorManager mSensorManager;
-    private Sensor mAccelerometer;
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 1000;
     private final float NOISE = (float) 1.0;
     protected ArrayList<String> xCoord = new ArrayList<>();
     protected ArrayList<String> yCoord = new ArrayList<>();
     protected ArrayList<String> zCoord = new ArrayList<>();
-
-    private static final String TAG = MainActivity.class.getSimpleName();
-    private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 1000;
-    private Location mLastLocation;
-    // Google client to interact with Google API
-    private GoogleApiClient mGoogleApiClient;
-    private GoogleApiClient client;
-
-
+    String http = "http://roadgems.ml/create_pothole.php";
     TextView outputView;
-    private double lat;
-    private double lng;
-
     boolean stopFlag = false;
     boolean startFlag = false;
     boolean isFirstSet = true;
-    boolean isFileCreated=false;
+    boolean isFileCreated = false;
     File myFile;
     FileOutputStream fOut;
     OutputStreamWriter myOutWriter;
     BufferedWriter myBufferedWriter;
     PrintWriter myPrintWriter;
-
     float x;
     float y;
     float z;
+    private ProgressDialog progress;
+    private float mLastX, mLastY, mLastZ;
+    private boolean mInitialized;
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private Location mLastLocation;
+    // Google client to interact with Google API
+    private GoogleApiClient mGoogleApiClient;
+    private GoogleApiClient client;
+    private double lat;
+    private double lng;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -114,7 +95,7 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        outputView= (TextView) findViewById(R.id.showOutput);
+        outputView = (TextView) findViewById(R.id.showOutput);
 
         Button map = (Button) findViewById(R.id.map);
         map.setOnClickListener(new View.OnClickListener() {
@@ -144,18 +125,18 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try{
-                   fOut = new FileOutputStream(myFile);
-                   myOutWriter = new OutputStreamWriter(fOut);
-                   myBufferedWriter = new BufferedWriter(myOutWriter);
-                   myPrintWriter = new PrintWriter(myBufferedWriter);
-                   Toast.makeText(getBaseContext(), "Start saving data", Toast.LENGTH_LONG).show();
+                try {
+                    fOut = new FileOutputStream(myFile);
+                    myOutWriter = new OutputStreamWriter(fOut);
+                    myBufferedWriter = new BufferedWriter(myOutWriter);
+                    myPrintWriter = new PrintWriter(myBufferedWriter);
+                    Toast.makeText(getBaseContext(), "Start saving data", Toast.LENGTH_LONG).show();
 
-               } catch (Exception e) {
-                    Toast.makeText(getBaseContext(),"No file",Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(getBaseContext(), "No file", Toast.LENGTH_LONG).show();
 
-                }finally {
-                    startFlag=true;
+                } finally {
+                    startFlag = true;
                 }
 
             }
@@ -165,11 +146,11 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
         btnStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try{
-                    stopFlag=true;
+                try {
+                    stopFlag = true;
                     Toast.makeText(getBaseContext(), "Data saved", Toast.LENGTH_SHORT).show();
-                }catch (Exception e){
-                    Toast.makeText(getBaseContext(),e.getMessage(),Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -185,14 +166,17 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
 
     private void displayLocation() {
 
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
         mLastLocation = LocationServices.FusedLocationApi
                 .getLastLocation(mGoogleApiClient);
 
         if (mLastLocation != null) {
             double latitude = mLastLocation.getLatitude();
             double longitude = mLastLocation.getLongitude();
-            this.lat=latitude;
-            this.lng=longitude;
+            this.lat = latitude;
+            this.lng = longitude;
             outputView.setText(latitude + ", " + longitude);
 
         } else {
@@ -200,12 +184,14 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
             outputView.setText("(Couldn't get the location. Make sure location is enabled on the device)");
         }
     }
+
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API).build();
     }
+
     private boolean checkPlayServices() {
         int resultCode = GooglePlayServicesUtil
                 .isGooglePlayServicesAvailable(this);
@@ -240,12 +226,19 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
     }
 
 
-    public double getLat(){
+    public double getLat() {
         return this.lat;
     }
-    public double getLng(){
+
+    public double getLng() {
         return this.lng;
     }
+
+    public void postData(View view) {
+
+        new PostClass(this).execute(String.valueOf(lat), String.valueOf(lng), "Put");
+    }
+
 
     @Override
     protected void onStart() {
@@ -277,108 +270,40 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
         TextView tvY = (TextView) findViewById(R.id.y_axis);
         TextView tvZ = (TextView) findViewById(R.id.z_axis);
 
-        if(startFlag){
+        if (startFlag) {
 
-            if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
-                x= event.values[0];
+            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                x = event.values[0];
                 y = event.values[1];
                 z = event.values[2];
             }
 
-            for(int i=0; i<1;i++){
-                if(!stopFlag){
+            for (int i = 0; i < 1; i++) {
+                if (!stopFlag) {
                     saveToTxt();
-                }
-                else{
-                    try{
+                } else {
+                    try {
                         myOutWriter.close();
                     } catch (IOException e) {
                         e.printStackTrace();
-                    }catch(NullPointerException e){
+                    } catch (NullPointerException e) {
                         e.printStackTrace();
                     }
 
-                    try{
+                    try {
                         fOut.close();
-                    }catch(IOException e) {
+                    } catch (IOException e) {
                         e.printStackTrace();
-                    } catch (NullPointerException e){
+                    } catch (NullPointerException e) {
                         e.printStackTrace();
                     }
                 }
             }
 
 
-
         }
-
-//        float x = event.values[0];
-//        float y = event.values[1];
-//        float z = event.values[2];
-//
-//        if (!mInitialized) {
-//            mLastX = x;
-//            mLastY = y;
-//            mLastZ = z;
-//            tvX.setText("0.0");
-//            tvY.setText("0.0");
-//            tvZ.setText("0.0");
-//            mInitialized = true;
-//        } else {
-//            float deltaX = Math.abs(mLastX - x);
-//            float deltaY = Math.abs(mLastY - y);
-//            float deltaZ = Math.abs(mLastZ - z);
-//            if (deltaX < NOISE) deltaX = (float) 0.0;
-//            if (deltaY < NOISE) deltaY = (float) 0.0;
-//            if (deltaZ < NOISE) deltaZ = (float) 0.0;
-//            mLastX = x;
-//            mLastY = y;
-//            mLastZ = z;
-//            tvX.setText(Float.toString(deltaX));
-//            xCoord.add("" + deltaX);
-//            tvY.setText(Float.toString(deltaY));
-//            yCoord.add("" + deltaY);
-//            tvZ.setText(Float.toString(deltaZ));
-//            zCoord.add("" + deltaZ);
-//
-//        }
     }
 
-    public void postData(View view) {
-
-        new PostClass(this).execute("1", "2", "Put");
-    }
-    public String createPostParamsFromJson(JSONObject jsonobj) {
-        StringBuilder postData = new StringBuilder();
-        Iterator<?> keys = jsonobj.keys();
-        while (keys.hasNext()) {
-            String key = (String) keys.next();
-            try {
-                if (postData.length() != 0) postData.append('&');
-                postData.append(URLEncoder.encode(key, "UTF-8"));
-                postData.append('=');
-                postData.append(URLEncoder.encode(String.valueOf(jsonobj.get(key)), "UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        return postData.toString();
-    }
-    public JSONObject createJSONHole(Integer lat, Integer lng, String pothole) {
-        JSONObject jsonobj = new JSONObject();
-
-        try {
-
-            jsonobj.put("lat", this.getLat());
-            jsonobj.put("lng", this.getLng());
-            jsonobj.put("pothole", pothole);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return jsonobj;
-    }
 
     @Override
     public void onConnected(Bundle bundle) {
@@ -414,11 +339,44 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
             progress.show();
         }
 
+        public String createPostParamsFromJson(JSONObject jsonobj) {
+            StringBuilder postData = new StringBuilder();
+            Iterator<?> keys = jsonobj.keys();
+            while (keys.hasNext()) {
+                String key = (String) keys.next();
+                try {
+                    if (postData.length() != 0) postData.append('&');
+                    postData.append(URLEncoder.encode(key, "UTF-8"));
+                    postData.append('=');
+                    postData.append(URLEncoder.encode(String.valueOf(jsonobj.get(key)), "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            return postData.toString();
+        }
+
+        public JSONObject createJSONHole(Double lat, Double lng, String pothole) {
+            JSONObject jsonobj = new JSONObject();
+
+            try {
+
+                jsonobj.put("lat", lat);
+                jsonobj.put("lng", lng);
+                jsonobj.put("pothole", pothole);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return jsonobj;
+        }
+
         @Override
         protected Void doInBackground(String... params) {
             try {
-                Integer lat = Integer.valueOf(params[0]);
-                Integer lng = Integer.valueOf(params[1]);
+                Double lat = Double.valueOf(params[0]);
+                Double lng = Double.valueOf(params[1]);
                 String hole = params[2];
                 JSONObject jsonobj = createJSONHole(lat, lng, hole);
                 byte[] postDataBytes = createPostParamsFromJson(jsonobj).getBytes("UTF-8");
@@ -470,7 +428,6 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
             }
             return null;
         }
-
 
 
     }
