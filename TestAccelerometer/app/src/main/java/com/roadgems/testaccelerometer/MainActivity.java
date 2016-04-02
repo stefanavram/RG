@@ -48,6 +48,7 @@ import java.util.Iterator;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -65,7 +66,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends Activity implements SensorEventListener,ConnectionCallbacks,
+public class MainActivity extends Activity implements SensorEventListener, ConnectionCallbacks,
         OnConnectionFailedListener {
 
 
@@ -95,7 +96,7 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
     boolean stopFlag = false;
     boolean startFlag = false;
     boolean isFirstSet = true;
-    boolean isFileCreated=false;
+    boolean isFileCreated = false;
     File myFile;
     FileOutputStream fOut;
     OutputStreamWriter myOutWriter;
@@ -114,7 +115,7 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        outputView= (TextView) findViewById(R.id.showOutput);
+        outputView = (TextView) findViewById(R.id.showOutput);
 
         Button map = (Button) findViewById(R.id.map);
         map.setOnClickListener(new View.OnClickListener() {
@@ -144,18 +145,19 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try{
-                   fOut = new FileOutputStream(myFile);
-                   myOutWriter = new OutputStreamWriter(fOut);
-                   myBufferedWriter = new BufferedWriter(myOutWriter);
-                   myPrintWriter = new PrintWriter(myBufferedWriter);
-                   Toast.makeText(getBaseContext(), "Start saving data", Toast.LENGTH_LONG).show();
+                try {
+                    createFile();
+                    fOut = new FileOutputStream(myFile);
+                    myOutWriter = new OutputStreamWriter(fOut);
+                    myBufferedWriter = new BufferedWriter(myOutWriter);
+                    myPrintWriter = new PrintWriter(myBufferedWriter);
+                    Toast.makeText(getBaseContext(), "Start saving data", Toast.LENGTH_LONG).show();
 
-               } catch (Exception e) {
-                    Toast.makeText(getBaseContext(),"No file",Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(getBaseContext(), "No file", Toast.LENGTH_LONG).show();
 
-                }finally {
-                    startFlag=true;
+                } finally {
+                    startFlag = true;
                 }
 
             }
@@ -165,11 +167,11 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
         btnStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try{
-                    stopFlag=true;
+                try {
+                    stopFlag = true;
                     Toast.makeText(getBaseContext(), "Data saved", Toast.LENGTH_SHORT).show();
-                }catch (Exception e){
-                    Toast.makeText(getBaseContext(),e.getMessage(),Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -185,6 +187,16 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
 
     private void displayLocation() {
 
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         mLastLocation = LocationServices.FusedLocationApi
                 .getLastLocation(mGoogleApiClient);
 
@@ -283,6 +295,11 @@ public class MainActivity extends Activity implements SensorEventListener,Connec
                 x= event.values[0];
                 y = event.values[1];
                 z = event.values[2];
+                tvX.setText(Float.toString(x));
+                tvY.setText(Float.toString(y));
+                tvZ.setText(Float.toString(z));
+
+
             }
 
             for(int i=0; i<1;i++){
