@@ -1,48 +1,24 @@
 package com.roadgems.testaccelerometer;
 
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
-import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
-import com.google.android.gms.location.LocationServices;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -51,50 +27,23 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class MainActivity extends Activity implements SensorEventListener, ConnectionCallbacks,
-        OnConnectionFailedListener {
+public class MainActivity extends Activity {
 
-
-    private static final String TAG = MainActivity.class.getSimpleName();
-    private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 1000;
+    GPSTracker gps;
     private final float NOISE = (float) 1.0;
     protected ArrayList<String> xCoord = new ArrayList<>();
     protected ArrayList<String> yCoord = new ArrayList<>();
     protected ArrayList<String> zCoord = new ArrayList<>();
-    String http = "http://roadgems.ml/create_pothole.php";
     TextView outputView;
-    boolean stopFlag = false;
-    boolean startFlag = false;
-    boolean isFirstSet = true;
-    boolean isFileCreated = false;
-    File myFile;
-    FileOutputStream fOut;
-    OutputStreamWriter myOutWriter;
-    BufferedWriter myBufferedWriter;
-    PrintWriter myPrintWriter;
-    float x;
-    float y;
-    float z;
+
     private ProgressDialog progress;
-    private float mLastX, mLastY, mLastZ;
-    private boolean mInitialized;
-    private SensorManager mSensorManager;
-    private Sensor mAccelerometer;
-    private Location mLastLocation;
-    // Google client to interact with Google API
-    private GoogleApiClient mGoogleApiClient;
-    private GoogleApiClient client;
-    private double lat;
-    private double lng;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mInitialized = false;
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
         outputView = (TextView) findViewById(R.id.showOutput);
 
         Button map = (Button) findViewById(R.id.map);
@@ -106,17 +55,26 @@ public class MainActivity extends Activity implements SensorEventListener, Conne
 
         });
 
-        if (checkPlayServices()) {
-
-            // Building the GoogleApi client
-            buildGoogleApiClient();
-        }
 
         Button btnGps = (Button) findViewById(R.id.btnGps);
         btnGps.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
+                gps = new GPSTracker(MainActivity.this);
 
-                displayLocation();
+                // check if GPS enabled
+                if (gps.canGetLocation()) {
+
+                    double latitude = gps.getLatitude();
+                    double longitude = gps.getLongitude();
+
+                    // \n is for new line
+                    Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+                } else {
+                    // can't get location
+                    // GPS or Network is not enabled
+                    // Ask user to enable GPS/network in settings
+                    gps.showSettingsAlert();
+                }
             }
 
         });
@@ -125,208 +83,22 @@ public class MainActivity extends Activity implements SensorEventListener, Conne
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    fOut = new FileOutputStream(myFile);
-                    myOutWriter = new OutputStreamWriter(fOut);
-                    myBufferedWriter = new BufferedWriter(myOutWriter);
-                    myPrintWriter = new PrintWriter(myBufferedWriter);
-                    Toast.makeText(getBaseContext(), "Start saving data", Toast.LENGTH_LONG).show();
 
-                } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), "No file", Toast.LENGTH_LONG).show();
-
-                } finally {
-                    startFlag = true;
-                }
 
             }
         });
 
-        Button btnStop = (Button) findViewById(R.id.btnStop);
-        btnStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    stopFlag = true;
-                    Toast.makeText(getBaseContext(), "Data saved", Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-    private void createFile() throws IOException {
-        File Root = Environment.getExternalStorageDirectory();
-        File Dir = createDir(Root);
-        myFile = new File(Dir, "save.txt");
-        myFile.createNewFile();
-    }
-
-    private void displayLocation() {
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        mLastLocation = LocationServices.FusedLocationApi
-                .getLastLocation(mGoogleApiClient);
-
-        if (mLastLocation != null) {
-            double latitude = mLastLocation.getLatitude();
-            double longitude = mLastLocation.getLongitude();
-            this.lat = latitude;
-            this.lng = longitude;
-            outputView.setText(latitude + ", " + longitude);
-
-        } else {
-
-            outputView.setText("(Couldn't get the location. Make sure location is enabled on the device)");
-        }
-    }
-
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API).build();
-    }
-
-    private boolean checkPlayServices() {
-        int resultCode = GooglePlayServicesUtil
-                .isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                GooglePlayServicesUtil.getErrorDialog(resultCode, this,
-                        PLAY_SERVICES_RESOLUTION_REQUEST).show();
-            } else {
-                Toast.makeText(getApplicationContext(),
-                        "This device is not supported.", Toast.LENGTH_LONG)
-                        .show();
-                finish();
-            }
-            return false;
-        }
-        return true;
-    }
-
-    public void saveToTxt() {
-
-        myPrintWriter.append("" + x + "  " + y + "  " + z + "\n");
-        //myPrintWriter.flush();
-    }
-
-    @NonNull
-    private File createDir(File root) {
-        File Dir = new File(root.getAbsolutePath() + "/RoadGems");
-        if (!Dir.exists()) {
-            Dir.mkdir();
-        }
-        return Dir;
-    }
-
-
-    public double getLat() {
-        return this.lat;
-    }
-
-    public double getLng() {
-        return this.lng;
-    }
 
     public void postData(View view) {
 
-        new PostClass(this).execute(String.valueOf(lat), String.valueOf(lng), "Put");
-    }
-
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    protected void onResume() {
-        super.onResume();
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-        checkPlayServices();
-    }
-
-    protected void onPause() {
-        super.onPause();
-        mSensorManager.unregisterListener(this);
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        TextView tvX = (TextView) findViewById(R.id.x_axis);
-        TextView tvY = (TextView) findViewById(R.id.y_axis);
-        TextView tvZ = (TextView) findViewById(R.id.z_axis);
-
-        if (startFlag) {
-
-            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                x = event.values[0];
-                y = event.values[1];
-                z = event.values[2];
-            }
-
-            for (int i = 0; i < 1; i++) {
-                if (!stopFlag) {
-                    saveToTxt();
-                } else {
-                    try {
-                        myOutWriter.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (NullPointerException e) {
-                        e.printStackTrace();
-                    }
-
-                    try {
-                        fOut.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (NullPointerException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-
-        }
-    }
-
-
-    @Override
-    public void onConnected(Bundle bundle) {
-
-        displayLocation();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
-        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = "
-                + connectionResult.getErrorCode());
+        //new PostClass(this).execute(String.valueOf(lat), String.valueOf(lng), "Put");
     }
 
 
     private class PostClass extends AsyncTask<String, Void, Void> {
-
+        private String http = "http://roadgems.ml/create_pothole.php";
         private final Context context;
 
         public PostClass(Context c) {
