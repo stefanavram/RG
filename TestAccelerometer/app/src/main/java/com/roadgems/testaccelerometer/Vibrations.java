@@ -14,49 +14,35 @@ import android.widget.Toast;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 
 public class Vibrations extends Service implements SensorEventListener {
-    float x;
-    float y;
-    float z;
-    boolean stopFlag = false;
-    boolean startFlag = false;
-    boolean isFirstSet = true;
-    boolean isFileCreated = false;
-    File myFile;
-    FileOutputStream fOut;
-    OutputStreamWriter myOutWriter;
-    BufferedWriter myBufferedWriter;
-    PrintWriter myPrintWriter;
+
+    private boolean started = false;
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
-    private boolean mInitialized;
+    private ArrayList<AccelData> sensorData;
+
 
     @Override
     public void onCreate() {
         super.onCreate();
-        mInitialized = false;
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorData = new ArrayList<>();
+        started = true;
     }
 
-    private void createFile() throws IOException {
+    private File createFile(String name) throws IOException {
         File Root = Environment.getExternalStorageDirectory();
         File Dir = createDir(Root);
-        myFile = new File(Dir, "save.txt");
+        File myFile = new File(Dir, name);
         myFile.createNewFile();
-    }
-
-
-    public void saveToTxt() {
-
-        myPrintWriter.append("" + x + "  " + y + "  " + z + "\n");
-        //myPrintWriter.flush();
+        return myFile;
     }
 
     @NonNull
@@ -68,69 +54,51 @@ public class Vibrations extends Service implements SensorEventListener {
         return Dir;
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (startFlag)
-
-        {
-
-            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                x = event.values[0];
-                y = event.values[1];
-                z = event.values[2];
-            }
-
-            for (int i = 0; i < 1; i++) {
-                if (!stopFlag) {
-                    saveToTxt();
-                } else {
-                    try {
-                        myOutWriter.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (NullPointerException e) {
-                        e.printStackTrace();
-                    }
-
-                    try {
-                        fOut.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (NullPointerException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-
-        }
-
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
-
     public void save() {
 
         try {
-            fOut = new FileOutputStream(myFile);
-            myOutWriter = new OutputStreamWriter(fOut);
-            myBufferedWriter = new BufferedWriter(myOutWriter);
-            myPrintWriter = new PrintWriter(myBufferedWriter);
+            File myFile = createFile("save.txt");
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(myFile)));
+
+            for (int i = 0; i < sensorData.size(); i++) {
+                out.write(sensorData.get(i).toString());
+                out.write("\n");
+            }
+            out.close();
             Toast.makeText(getBaseContext(), "Start saving data", Toast.LENGTH_LONG).show();
 
         } catch (Exception e) {
             Toast.makeText(getBaseContext(), "No file", Toast.LENGTH_LONG).show();
 
         } finally {
-            startFlag = true;
+            started = false;
         }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (started) {
+            double x = event.values[0];
+            double y = event.values[1];
+            double z = event.values[2];
+            long timestamp = System.currentTimeMillis();
+            AccelData data = new AccelData(timestamp, x, y, z);
+            sensorData.add(data);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    @Override
+    public void onDestroy() {
+        save();
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        // TODO: Return the communication channel to the service.
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 }

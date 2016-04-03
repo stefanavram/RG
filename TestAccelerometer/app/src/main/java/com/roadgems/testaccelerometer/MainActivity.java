@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,17 +23,13 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 public class MainActivity extends Activity {
 
     GPSTracker gps;
-    private final float NOISE = (float) 1.0;
-    protected ArrayList<String> xCoord = new ArrayList<>();
-    protected ArrayList<String> yCoord = new ArrayList<>();
-    protected ArrayList<String> zCoord = new ArrayList<>();
     TextView outputView;
+
 
     private ProgressDialog progress;
 
@@ -43,56 +38,41 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         outputView = (TextView) findViewById(R.id.showOutput);
 
-        Button map = (Button) findViewById(R.id.map);
-        map.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View view) {
-                Intent myIntent = new Intent(view.getContext(), Map.class);
-                startActivityForResult(myIntent, 0);
-            }
-
-        });
-
-
-        Button btnGps = (Button) findViewById(R.id.btnGps);
-        btnGps.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View view) {
-                gps = new GPSTracker(MainActivity.this);
-
-                // check if GPS enabled
-                if (gps.canGetLocation()) {
-
-                    double latitude = gps.getLatitude();
-                    double longitude = gps.getLongitude();
-
-                    // \n is for new line
-                    Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
-                } else {
-                    // can't get location
-                    // GPS or Network is not enabled
-                    // Ask user to enable GPS/network in settings
-                    gps.showSettingsAlert();
-                }
-            }
-
-        });
-
-        Button btnSave = (Button) findViewById(R.id.btnSave);
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-
-            }
-        });
+        startService(new Intent(this, Vibrations.class));
 
     }
 
+    public void saveData(View view) {
+        stopService(new Intent(this, Vibrations.class));
+    }
+
+    public void displayMap(View view) {
+        Intent myIntent = new Intent(view.getContext(), Map.class);
+        startActivityForResult(myIntent, 0);
+    }
+
+    public void gps(View view) {
+        gps = new GPSTracker(MainActivity.this);
+
+        // check if GPS enabled
+        if (gps.canGetLocation()) {
+
+            double latitude = gps.getLatitude();
+            double longitude = gps.getLongitude();
+
+            // \n is for new line
+            Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+        } else {
+            // can't get location
+            // GPS or Network is not enabled
+            // Ask user to enable GPS/network in settings
+            gps.showSettingsAlert();
+        }
+    }
 
     public void postData(View view) {
-
         //new PostClass(this).execute(String.valueOf(lat), String.valueOf(lng), "Put");
     }
 
