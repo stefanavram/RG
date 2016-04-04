@@ -26,6 +26,9 @@ public class Vibrations extends Service implements SensorEventListener {
     private Sensor mAccelerometer;
     private ArrayList<AccelData> sensorData;
 
+    static final float ALPHA = 0.25f;
+    protected float[] gravSensorVals;
+
 
     @Override
     public void onCreate() {
@@ -75,14 +78,26 @@ public class Vibrations extends Service implements SensorEventListener {
         }
     }
 
+    protected float[] lowPass(float[] input, float[] output) {
+        if ( output == null ) return input;
+
+        for ( int i=0; i<input.length; i++ ) {
+            output[i] = output[i] + ALPHA * (input[i] - output[i]);
+        }
+        return output;
+    }
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (started) {
+
+            gravSensorVals=lowPass(event.values.clone(),gravSensorVals);
+
             double x = event.values[0];
             double y = event.values[1];
             double z = event.values[2];
             long timestamp = System.currentTimeMillis();
-            AccelData data = new AccelData(timestamp, x, y, z);
+            AccelData data = new AccelData(timestamp, gravSensorVals[0], gravSensorVals[1], gravSensorVals[2]);
             sensorData.add(data);
         }
     }
