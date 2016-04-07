@@ -39,6 +39,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         outputView = (TextView) findViewById(R.id.showOutput);
+        gps = new GPSTracker(MainActivity.this);
 
         startService(new Intent(this, Vibrations.class));
 
@@ -49,12 +50,13 @@ public class MainActivity extends Activity {
     }
 
     public void displayMap(View view) {
+
         Intent myIntent = new Intent(view.getContext(), Map.class);
         startActivityForResult(myIntent, 0);
     }
 
-    public void gps(View view) {
-        gps = new GPSTracker(MainActivity.this);
+    public void hole(View view) {
+
 
         // check if GPS enabled
         if (gps.canGetLocation()) {
@@ -62,6 +64,26 @@ public class MainActivity extends Activity {
             double latitude = gps.getLatitude();
             double longitude = gps.getLongitude();
 
+            new PostClass(this).execute(String.valueOf(latitude), String.valueOf(longitude), String.valueOf(System.currentTimeMillis()));
+
+            Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+        } else {
+            // can't get location
+            // GPS or Network is not enabled
+            // Ask user to enable GPS/network in settings
+            gps.showSettingsAlert();
+        }
+    }
+
+    public void gps(View view) {
+
+
+        // check if GPS enabled
+        if (gps.canGetLocation()) {
+
+            double latitude = gps.getLatitude();
+            double longitude = gps.getLongitude();
+            new PostClass(this).execute(String.valueOf(latitude), String.valueOf(longitude), "Put");
             // \n is for new line
             Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
         } else {

@@ -83,14 +83,15 @@ public class Vibrations extends Service implements SensorEventListener {
     public void onSensorChanged(SensorEvent event) {
         if (started) {
 
-            float[] lowPassFiltered = filters.lowPass(event.values.clone(), gravSensorVals);
-            float[] highPassFiltered = filters.highPass(event.values.clone(), gravSensorVals);
-            gravSensorVals[0] = (lowPassFiltered[0] + highPassFiltered[0]) / 2;
-            gravSensorVals[1] = (lowPassFiltered[1] + highPassFiltered[1]) / 2;
-            gravSensorVals[2] = (lowPassFiltered[2] + highPassFiltered[2]) / 2;
+//            float[] lowPassFiltered = filters.lowPass(event.values.clone(), gravSensorVals);
+//            float[] highPassFiltered = filters.highPass(event.values.clone(), gravSensorVals);
+//            gravSensorVals[0] = (lowPassFiltered[0] + highPassFiltered[0]) / 2;
+//            gravSensorVals[1] = (lowPassFiltered[1] + highPassFiltered[1]) / 2;
+//            gravSensorVals[2] = (lowPassFiltered[2] + highPassFiltered[2]) / 2;
 
             long timestamp = System.currentTimeMillis();
-            AccelData data = new AccelData(timestamp, gravSensorVals[0], gravSensorVals[1], gravSensorVals[2]);
+            //AccelData data = new AccelData(timestamp, gravSensorVals[0], gravSensorVals[1], gravSensorVals[2]);
+            AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2]);
             sensorData.add(data);
         }
     }

@@ -1,10 +1,7 @@
 package com.roadgems.testaccelerometer;
 
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -28,6 +25,7 @@ public class Map extends AppCompatActivity {
                 callback.invoke(origin, true, false);
             }
         });
-        myWebView.loadUrl("http://roadgems.ml");
+        webSettings.setGeolocationDatabasePath(this.getFilesDir().getPath());
+        myWebView.loadUrl("http://roadgems.ml/map.html");
     }
 }

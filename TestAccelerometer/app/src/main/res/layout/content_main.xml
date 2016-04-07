@@ -1,84 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="@color/view_bg"
     android:weightSum="1">
-    <TextView
-        android:paddingTop="20dip"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:text="Shaker Demo"
-        android:textColor="@color/white"/>
-    <TableLayout
-        android:paddingTop="10dip"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:stretchColumns="*">
-        <TableRow>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:text="X-Axis"
-                android:textColor="@color/white"
-                android:gravity="center"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:text="Y-Axis"
-                android:textColor="@color/white"
-                android:gravity="center"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:text="Z-Axis"
-                android:textColor="@color/white"
-                android:gravity="center"/>
-        </TableRow>
-        <TableRow>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/x_axis"
-                android:textColor="@color/white"
-                android:gravity="center"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/y_axis"
-                android:textColor="@color/white"
-                android:gravity="center"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/z_axis"
-                android:textColor="@color/white"
-                android:gravity="center"/>
-        </TableRow>
-    </TableLayout>
-    <ImageView
-        android:paddingTop="10dip"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/image"
-        android:layout_gravity="center"
-        android:visibility="invisible"/>
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_weight="0.28">
-
-    </LinearLayout>
 
     <Button
         android:layout_width="wrap_content"
@@ -88,7 +13,24 @@
         android:layout_gravity="center_horizontal"
         android:onClick="saveData"
         android:background="@color/btn_bg"
-        android:textColor="@color/white"/>
+        android:textColor="@color/white"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_toLeftOf="@+id/btnGps"
+        android:layout_toStartOf="@+id/btnGps" />
+
+    <Button
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:text="GPS"
+        android:id="@+id/btnGps"
+        android:layout_gravity="right"
+        android:background="@color/btn_bg"
+        android:textColor="@color/white"
+        android:onClick="gps"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -98,27 +40,12 @@
         android:layout_gravity="center_horizontal"
         android:background="@color/btn_bg"
         android:textColor="@color/white"
-        android:onClick="displayMap" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="post"
-        android:id="@+id/post"
-        android:onClick="postData"
-        android:layout_gravity="center_horizontal"
-        android:background="@color/btn_bg"
-        android:textColor="@color/white"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="GPS"
-        android:id="@+id/btnGps"
-        android:layout_gravity="center_horizontal"
-        android:background="@color/btn_bg"
-        android:textColor="@color/white"
-        android:onClick="gps" />
+        android:onClick="displayMap"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_toRightOf="@+id/btnGps"
+        android:layout_toEndOf="@+id/btnGps" />
 
     <TextView
         android:layout_width="273dp"
@@ -126,6 +53,21 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:id="@+id/showOutput"
         android:layout_gravity="center_horizontal"
-        android:textColor="@color/white"/>
+        android:textColor="@color/white"
+        android:layout_centerHorizontal="true"
+        android:layout_column="1" />
 
-</LinearLayout>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hole"
+        android:id="@+id/hole"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/btn_bg"
+        android:textColor="@color/white"
+        android:onClick="hole"
+        android:layout_above="@+id/btnGps"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+
+</RelativeLayout>
