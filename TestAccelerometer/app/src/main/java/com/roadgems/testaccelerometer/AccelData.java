@@ -49,4 +49,8 @@ public class AccelData {
     public String toString() {
         return "" + timestamp + "," + x + "," + y + "," + z;
     }
+
+    public String coordinates() {
+        return x + "," + y + "," + z;
+    }
 }

@@ -21,14 +21,13 @@ import java.util.ArrayList;
 
 public class Vibrations extends Service implements SensorEventListener {
 
+    static final float ALPHA = 0.25f;
+    protected float[] gravSensorVals = new float[3];
     private boolean started = false;
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     private ArrayList<AccelData> sensorData;
-
-    static final float ALPHA = 0.25f;
-    protected float[] gravSensorVals;
-
+    private Filter filters;
 
     @Override
     public void onCreate() {
@@ -38,6 +37,7 @@ public class Vibrations extends Service implements SensorEventListener {
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         sensorData = new ArrayList<>();
         started = true;
+        filters = new Filter();
     }
 
     private File createFile(String name) throws IOException {
@@ -61,14 +61,15 @@ public class Vibrations extends Service implements SensorEventListener {
 
         try {
             File myFile = createFile("save.txt");
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(myFile)));
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(myFile, true)));
 
             for (int i = 0; i < sensorData.size(); i++) {
-                out.write(sensorData.get(i).toString());
+                AccelData current = sensorData.get(i);
+                out.write(current.getTimestamp() + "," + current.coordinates());
                 out.write("\n");
             }
             out.close();
-            Toast.makeText(getBaseContext(), "Start saving data", Toast.LENGTH_LONG).show();
+            Toast.makeText(getBaseContext(), "Data saved to file", Toast.LENGTH_LONG).show();
 
         } catch (Exception e) {
             Toast.makeText(getBaseContext(), "No file", Toast.LENGTH_LONG).show();
@@ -78,24 +79,16 @@ public class Vibrations extends Service implements SensorEventListener {
         }
     }
 
-    protected float[] lowPass(float[] input, float[] output) {
-        if ( output == null ) return input;
-
-        for ( int i=0; i<input.length; i++ ) {
-            output[i] = output[i] + ALPHA * (input[i] - output[i]);
-        }
-        return output;
-    }
-
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (started) {
 
-            gravSensorVals=lowPass(event.values.clone(),gravSensorVals);
+            float[] lowPassFiltered = filters.lowPass(event.values.clone(), gravSensorVals);
+            float[] highPassFiltered = filters.highPass(event.values.clone(), gravSensorVals);
+            gravSensorVals[0] = (lowPassFiltered[0] + highPassFiltered[0]) / 2;
+            gravSensorVals[1] = (lowPassFiltered[1] + highPassFiltered[1]) / 2;
+            gravSensorVals[2] = (lowPassFiltered[2] + highPassFiltered[2]) / 2;
 
-            double x = event.values[0];
-            double y = event.values[1];
-            double z = event.values[2];
             long timestamp = System.currentTimeMillis();
             AccelData data = new AccelData(timestamp, gravSensorVals[0], gravSensorVals[1], gravSensorVals[2]);
             sensorData.add(data);
