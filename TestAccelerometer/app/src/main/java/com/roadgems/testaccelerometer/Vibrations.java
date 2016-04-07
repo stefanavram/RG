@@ -7,16 +7,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Environment;
 import android.os.IBinder;
-import android.support.annotation.NonNull;
-import android.widget.Toast;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class Vibrations extends Service implements SensorEventListener {
@@ -40,44 +32,6 @@ public class Vibrations extends Service implements SensorEventListener {
         filters = new Filter();
     }
 
-    private File createFile(String name) throws IOException {
-        File Root = Environment.getExternalStorageDirectory();
-        File Dir = createDir(Root);
-        File myFile = new File(Dir, name);
-        myFile.createNewFile();
-        return myFile;
-    }
-
-    @NonNull
-    private File createDir(File root) {
-        File Dir = new File(root.getAbsolutePath() + "/RoadGems");
-        if (!Dir.exists()) {
-            Dir.mkdir();
-        }
-        return Dir;
-    }
-
-    public void save() {
-
-        try {
-            File myFile = createFile("save.txt");
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(myFile, true)));
-
-            for (int i = 0; i < sensorData.size(); i++) {
-                AccelData current = sensorData.get(i);
-                out.write(current.getTimestamp() + "," + current.coordinates());
-                out.write("\n");
-            }
-            out.close();
-            Toast.makeText(getBaseContext(), "Data saved to file", Toast.LENGTH_LONG).show();
-
-        } catch (Exception e) {
-            Toast.makeText(getBaseContext(), "No file", Toast.LENGTH_LONG).show();
-
-        } finally {
-            started = false;
-        }
-    }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -102,7 +56,9 @@ public class Vibrations extends Service implements SensorEventListener {
 
     @Override
     public void onDestroy() {
-        save();
+        DataSaver dataSaver = new DataSaver();
+        dataSaver.save("save.csv", true, sensorData, getBaseContext());
+        started = false;
     }
 
     @Override
