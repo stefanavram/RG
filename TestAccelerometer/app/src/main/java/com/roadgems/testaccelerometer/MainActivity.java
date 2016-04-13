@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         outputView = (TextView) findViewById(R.id.showOutput);
-        gps = new GPSTracker(MainActivity.this);
+
 
         startService(new Intent(this, Vibrations.class));
 
@@ -57,7 +57,7 @@ public class MainActivity extends Activity {
 
     public void hole(View view) {
 
-
+        gps = new GPSTracker(MainActivity.this);
         // check if GPS enabled
         if (gps.canGetLocation()) {
 
@@ -75,24 +75,24 @@ public class MainActivity extends Activity {
         }
     }
 
-    public void gps(View view) {
-
-
-        // check if GPS enabled
-        if (gps.canGetLocation()) {
-
-            double latitude = gps.getLatitude();
-            double longitude = gps.getLongitude();
-            new PostClass(this).execute(String.valueOf(latitude), String.valueOf(longitude), "Put");
-            // \n is for new line
-            Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
-        } else {
-            // can't get location
-            // GPS or Network is not enabled
-            // Ask user to enable GPS/network in settings
-            gps.showSettingsAlert();
-        }
-    }
+//    public void gps(View view) {
+//
+//
+//        // check if GPS enabled
+//        if (gps.canGetLocation()) {
+//
+//            double latitude = gps.getLatitude();
+//            double longitude = gps.getLongitude();
+//            new PostClass(this).execute(String.valueOf(latitude), String.valueOf(longitude), "Put");
+//            // \n is for new line
+//            Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+//        } else {
+//            // can't get location
+//            // GPS or Network is not enabled
+//            // Ask user to enable GPS/network in settings
+//            gps.showSettingsAlert();
+//        }
+//    }
 
     public void postData(View view) {
         //new PostClass(this).execute(String.valueOf(lat), String.valueOf(lng), "Put");
@@ -100,7 +100,7 @@ public class MainActivity extends Activity {
 
 
     private class PostClass extends AsyncTask<String, Void, Void> {
-        private String http = "http://roadgems.ml/create_pothole.php";
+        private String http = "https://roadgems.go.ro/create_pothole.php";
         private final Context context;
 
         public PostClass(Context c) {

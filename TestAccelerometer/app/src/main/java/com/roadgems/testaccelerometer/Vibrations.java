@@ -1,5 +1,6 @@
 package com.roadgems.testaccelerometer;
 
+import android.app.IntentService;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -21,16 +22,16 @@ public class Vibrations extends Service implements SensorEventListener {
     private ArrayList<AccelData> sensorData;
     private Filter filters;
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorData = new ArrayList<>();
-        started = true;
-        filters = new Filter();
-    }
+//    @Override
+//    public void onCreate() {
+//        super.onCreate();
+//        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+//        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+//        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+//        sensorData = new ArrayList<>();
+//        started = true;
+//        filters = new Filter();
+//    }
 
 
     @Override
@@ -66,4 +67,10 @@ public class Vibrations extends Service implements SensorEventListener {
         // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+//    @Override
+//    protected void onHandleIntent(Intent intent) {
+//
+//
+//    }
 }

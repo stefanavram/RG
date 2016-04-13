@@ -25,7 +25,6 @@ public class Map extends AppCompatActivity {
                 callback.invoke(origin, true, false);
             }
         });
-        webSettings.setGeolocationDatabasePath(this.getFilesDir().getPath());
-        myWebView.loadUrl("http://roadgems.ml/map.html");
+        myWebView.loadUrl("https://roadgems.go.ro/map.html");
     }
 }
