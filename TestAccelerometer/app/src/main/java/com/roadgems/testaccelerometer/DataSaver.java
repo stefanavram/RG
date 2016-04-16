@@ -2,7 +2,7 @@ package com.roadgems.testaccelerometer;
 
 import android.content.Context;
 import android.os.Environment;
-import android.support.annotation.NonNull;
+
 import android.widget.Toast;
 
 import java.io.BufferedWriter;
@@ -26,7 +26,7 @@ public class DataSaver {
         return myFile;
     }
 
-    @NonNull
+
     private File createDir(File root) {
         File Dir = new File(root.getAbsolutePath() + "/RoadGems");
         if (!Dir.exists()) {

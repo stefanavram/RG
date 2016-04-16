@@ -8,20 +8,25 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.nfc.Tag;
 import android.os.IBinder;
+import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
 public class Vibrations extends Service implements SensorEventListener {
 
-    static final float ALPHA = 0.25f;
+    static final float THRESH = 0.25f;
     protected float[] gravSensorVals = new float[3];
     private boolean started = false;
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     private ArrayList<AccelData> sensorData;
-    private Filter filters;
-
+    private Filter filters = new Filter();
+    private Average avg_x = new Average();
+    private Average avg_y = new Average();
+    private Average avg_z = new Average();
 //    @Override
 //    public void onCreate() {
 //        super.onCreate();
@@ -37,16 +42,20 @@ public class Vibrations extends Service implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (started) {
+            gravSensorVals = filters.highPass(event.values.clone(), gravSensorVals);
+            avg_x.updateAverage(gravSensorVals[0]);
+            avg_y.updateAverage(gravSensorVals[1]);
+            avg_z.updateAverage(gravSensorVals[2]);
 
-//            float[] lowPassFiltered = filters.lowPass(event.values.clone(), gravSensorVals);
-//            float[] highPassFiltered = filters.highPass(event.values.clone(), gravSensorVals);
-//            gravSensorVals[0] = (lowPassFiltered[0] + highPassFiltered[0]) / 2;
-//            gravSensorVals[1] = (lowPassFiltered[1] + highPassFiltered[1]) / 2;
-//            gravSensorVals[2] = (lowPassFiltered[2] + highPassFiltered[2]) / 2;
+
+            if((gravSensorVals[2] > (avg_z.getAverage() - THRESH)) ||(gravSensorVals[2] < (avg_z.getAverage() + THRESH))) {
+               Log.d("Hole detected!!!", "Hole detected!!!");
+            }
 
             long timestamp = System.currentTimeMillis();
-            //AccelData data = new AccelData(timestamp, gravSensorVals[0], gravSensorVals[1], gravSensorVals[2]);
-            AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2]);
+            AccelData data = new AccelData(timestamp, gravSensorVals[0], gravSensorVals[1], gravSensorVals[2]);
+
+           // AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2]);
             sensorData.add(data);
         }
     }
