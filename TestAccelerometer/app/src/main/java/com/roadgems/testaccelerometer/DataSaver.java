@@ -2,7 +2,6 @@ package com.roadgems.testaccelerometer;
 
 import android.content.Context;
 import android.os.Environment;
-
 import android.widget.Toast;
 
 import java.io.BufferedWriter;
@@ -41,9 +40,11 @@ public class DataSaver {
             File myFile = createFile(fileName);
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(myFile, append)));
 
+            long t0Moment = sensorData.get(0).getTimestamp();
+
             for (int i = 0; i < sensorData.size(); i++) {
                 AccelData current = sensorData.get(i);
-                out.write(current.getTimestamp() + "," + current.coordinates() + "," + current.averages());
+                out.write(current.getTimestamp() -t0Moment + "," + current.coordinates() + "," + current.averages());
                 out.write("\n");
             }
             out.close();
