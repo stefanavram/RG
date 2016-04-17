@@ -62,13 +62,12 @@ public class Vibrations extends Service implements SensorEventListener {
             avg_y.updateAverage(event.values[1]);
             avg_z.updateAverage(event.values[2]);
 
-//            long timestamp = System.currentTimeMillis();
-//            AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2],
-//                    avg_x.getAverage(), avg_y.getAverage(), avg_z.getAverage(), THRESHOLD);
-//            sensorData.add(data);
-            if (Math.abs(event.values[0] - avg_x.getAverage()) > THRESHOLD ||
-                    Math.abs(event.values[1] - avg_y.getAverage()) > THRESHOLD ||
-                    Math.abs(event.values[2] - avg_z.getAverage()) > THRESHOLD)
+            long timestamp = System.currentTimeMillis();
+            AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2],
+                    avg_x.getAverage(), avg_y.getAverage(), avg_z.getAverage(), THRESHOLD);
+            sensorData.add(data);
+            if (Math.abs(event.values[0] - avg_x.getAverage()) > THRESHOLD + 2 ||
+                    Math.abs(event.values[1] - avg_y.getAverage()) > THRESHOLD + 2)
                 gps();
         }
     }
@@ -82,7 +81,7 @@ public class Vibrations extends Service implements SensorEventListener {
 
             double latitude = gps.getLatitude();
             double longitude = gps.getLongitude();
-            new PostClass(this).execute(String.valueOf(latitude), String.valueOf(longitude), "Put");
+            new PostClass(this).execute(String.valueOf(latitude), String.valueOf(longitude), "Put2");
             // \n is for new line
             Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
         }
