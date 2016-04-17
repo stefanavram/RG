@@ -9,7 +9,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.IBinder;
-import android.widget.Toast;
+import android.support.annotation.Nullable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,6 +25,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Vibrations extends Service implements SensorEventListener {
 
@@ -40,8 +42,9 @@ public class Vibrations extends Service implements SensorEventListener {
     private Average avg_x = new Average();
     private Average avg_y = new Average();
     private Average avg_z = new Average();
-    GPSTracker gps;
-
+    private GPSTracker gps;
+    private Timer timer;
+    private boolean holeDetected = false;
 
     @Override
     public void onCreate() {
@@ -52,59 +55,45 @@ public class Vibrations extends Service implements SensorEventListener {
         sensorData = new ArrayList<>();
         started = true;
         filters = new Filter();
+        gps = new GPSTracker(Vibrations.this);
+        timer = new Timer();
 
+        timer.schedule(new TimerTask() {
+            public void run() {
+                if (holeDetected == true) {
+                    if (gps.canGetLocation()) {
 
+                        double latitude = gps.getLatitude();
+                        double longitude = gps.getLongitude();
 
+                        new PostClass(Vibrations.this).execute(String.valueOf(latitude), String.valueOf(longitude), String.valueOf(System.currentTimeMillis()));
+                    }
+                    holeDetected = false;
+                }
+            }
+        }, 0, 2 * 1000); // 2 seconds
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (started) {
+            avg_x.updateAverage(event.values[0]);
+            avg_y.updateAverage(event.values[1]);
+            avg_z.updateAverage(event.values[2]);
+
+            long timestamp = System.currentTimeMillis();
+
+            AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2],
+                    avg_x.getAverage(), avg_y.getAverage(), avg_z.getAverage(), THRESHOLD);
+            sensorData.add(data);
 
 
-                gps = new GPSTracker(Vibrations.this);
-
-                avg_x.updateAverage(event.values[0]);
-                avg_y.updateAverage(event.values[1]);
-                avg_z.updateAverage(event.values[2]);
-
-                long timestamp = System.currentTimeMillis();
-
-                AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2],
-                        avg_x.getAverage(), avg_y.getAverage(), avg_z.getAverage(), THRESHOLD);
-
-                sensorData.add(data);
-//                gps=new GPSTracker(Vibrations.this);
-//                gps();
-//                if (Math.abs(event.values[0] - avg_x.getAverage()) > THRESHOLD + 2 ||
-//                        Math.abs(event.values[1] - avg_y.getAverage()) > THRESHOLD + 2) {
-//                    gps();
-//                }
-
-        }
-
-
-    }
-
-    private  boolean isGPSEnabled(){
-        if(gps.canGetLocation()){
-            return true;
-        }
-        return false;
-    }
-
-    public void gps() throws RuntimeException{
-
-        if(gps.canGetLocation()) {
-            double latitude = gps.getLatitude();
-            double longitude = gps.getLongitude();
-            new PostClass(this).execute(String.valueOf(latitude), String.valueOf(longitude), "Put2");
-        }
-        else{
-            gps.showSettingsAlert();
+            if (Math.abs(event.values[0] - avg_x.getAverage()) > THRESHOLD ||
+                    Math.abs(event.values[1] - avg_y.getAverage()) > THRESHOLD ||
+                    Math.abs(event.values[2] - avg_z.getAverage()) > THRESHOLD)
+                holeDetected = true;
         }
     }
-
 
 
     @Override
@@ -114,14 +103,16 @@ public class Vibrations extends Service implements SensorEventListener {
     @Override
     public void onDestroy() {
         DataSaver dataSaver = new DataSaver();
-        dataSaver.save("save2.csv", false, sensorData, getBaseContext());
+        dataSaver.save("save.csv", false, sensorData, getBaseContext());
         started = false;
     }
 
+    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        return null;
     }
+
 
     private class PostClass extends AsyncTask<String, Void, Void> {
         private String http = "https://roadgems.go.ro/create_pothole.php";

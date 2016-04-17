@@ -22,8 +22,6 @@ public class Average {
         if (Math.abs(new_point - avg) > THRESHOLD)
             outside++;
 
-        else outside = (outside < 0) ? 0 : outside--;
-
         if (outside >= 5)
             reset();
     }
