@@ -8,7 +8,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Save"
+        android:text="Save data"
         android:id="@+id/btnSave"
         android:layout_gravity="center_horizontal"
         android:onClick="saveData"
@@ -17,20 +17,9 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_toLeftOf="@+id/btnGps"
-        android:layout_toStartOf="@+id/btnGps" />
-
-    <Button
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:text="GPS"
-        android:id="@+id/btnGps"
-        android:layout_gravity="right"
-        android:background="@color/btn_bg"
-        android:textColor="@color/white"
-        android:onClick="gps"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_toLeftOf="@+id/hole"
+        android:layout_toStartOf="@+id/hole"
+        android:layout_alignTop="@+id/hole" />
 
     <Button
         android:layout_width="wrap_content"
@@ -44,29 +33,64 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_toRightOf="@+id/btnGps"
-        android:layout_toEndOf="@+id/btnGps" />
+        android:layout_toRightOf="@+id/hole"
+        android:layout_toEndOf="@+id/hole" />
 
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="130dp"
         android:layout_height="wrap_content"
-        android:text="Hole"
+        android:text="Mark Hole"
         android:id="@+id/hole"
         android:layout_gravity="center_horizontal"
         android:background="@color/btn_bg"
         android:textColor="@color/white"
         android:onClick="hole"
-        android:layout_above="@+id/btnGps"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/showOutput"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
+        android:background="@color/text_message"
+        android:textColor="#f5f5f5"
+        android:layout_below="@+id/textView3"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Once you started the application, the phone starts to  record vibrations. "
+        android:id="@+id/textView"
+        android:typeface="sans"
+        android:textColor="#f5f5f5"
+        android:background="@color/text_message"
+        android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:layout_margin="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/textView3"
+        android:typeface="sans"
+        android:textColor="#f5f5f5"
+        android:text="Put your phone somewhere in the car, so it can feel vibrations."
+        android:layout_below="@+id/textView"
+        android:layout_alignRight="@+id/webView"
+        android:layout_alignEnd="@+id/webView"
+        android:layout_margin="10dp"
+        android:background="@color/text_message" />
+
+    <WebView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/webView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/btnSave"
+        android:visibility="invisible" />
 
 </RelativeLayout>

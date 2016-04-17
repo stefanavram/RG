@@ -31,14 +31,11 @@ import java.util.TimerTask;
 public class Vibrations extends Service implements SensorEventListener {
 
 
-    static final double THRESHOLD = 1;
-    protected float[] highFiltered = new float[3];
-    protected float[] lowFiltered = new float[3];
+    static final double THRESHOLD = 0.8;
     private boolean started = false;
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     private ArrayList<AccelData> sensorData;
-    private Filter filters = new Filter();
     private Average avg_x = new Average();
     private Average avg_y = new Average();
     private Average avg_z = new Average();
@@ -54,24 +51,10 @@ public class Vibrations extends Service implements SensorEventListener {
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         sensorData = new ArrayList<>();
         started = true;
-        filters = new Filter();
         gps = new GPSTracker(Vibrations.this);
         timer = new Timer();
 
-        timer.schedule(new TimerTask() {
-            public void run() {
-                if (holeDetected == true) {
-                    if (gps.canGetLocation()) {
-
-                        double latitude = gps.getLatitude();
-                        double longitude = gps.getLongitude();
-
-                        new PostClass(Vibrations.this).execute(String.valueOf(latitude), String.valueOf(longitude), String.valueOf(System.currentTimeMillis()));
-                    }
-                    holeDetected = false;
-                }
-            }
-        }, 0, 2 * 1000); // 2 seconds
+        timer.schedule(new HoleTimer(), 0, 2 * 1000); // 2 seconds
     }
 
     @Override
@@ -105,6 +88,7 @@ public class Vibrations extends Service implements SensorEventListener {
         DataSaver dataSaver = new DataSaver();
         dataSaver.save("save.csv", false, sensorData, getBaseContext());
         started = false;
+
     }
 
     @Nullable
@@ -113,6 +97,20 @@ public class Vibrations extends Service implements SensorEventListener {
         return null;
     }
 
+    private class HoleTimer extends TimerTask {
+        public void run() {
+            if (holeDetected) {
+                if (gps.canGetLocation()) {
+
+                    double latitude = gps.getLatitude();
+                    double longitude = gps.getLongitude();
+
+                    new PostClass(Vibrations.this).execute(String.valueOf(latitude), String.valueOf(longitude), String.valueOf(System.currentTimeMillis()));
+                }
+                holeDetected = false;
+            }
+        }
+    }
 
     private class PostClass extends AsyncTask<String, Void, Void> {
         private String http = "https://roadgems.go.ro/create_pothole.php";

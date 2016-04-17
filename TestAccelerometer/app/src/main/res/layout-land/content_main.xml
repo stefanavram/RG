@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/view_bg"
+    android:weightSum="1"
+    android:gravity="center_vertical|center_horizontal">
+
+    <Button
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:text="Save\nData"
+        android:id="@+id/btnSave"
+        android:layout_gravity="center_horizontal"
+        android:onClick="saveData"
+        android:background="@drawable/round_button"
+        android:textColor="@color/white"
+        android:layout_alignParentBottom="true"
+        android:layout_alignLeft="@+id/textView"
+        android:layout_alignStart="@+id/textView"
+        android:layout_marginLeft="3dp"
+        android:layout_marginBottom="3dp" />
+
+    <Button
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:text="Map"
+        android:id="@+id/map"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/round_button"
+        android:textColor="@color/white"
+        android:onClick="displayMap"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="3dp"
+        android:layout_marginBottom="3dp" />
+
+    <Button
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:text="Mark Hole"
+        android:id="@+id/hole"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/round_button"
+        android:textColor="@color/white"
+        android:onClick="hole"
+        android:layout_alignBottom="@+id/btnSave"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/showOutput"
+        android:background="@color/text_message"
+        android:textColor="#f5f5f5"
+        android:layout_marginTop="20dp"
+        android:layout_below="@+id/textView3"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Once you started the application, the phone starts to  record vibrations. "
+        android:id="@+id/textView"
+        android:layout_marginTop="26dp"
+        android:typeface="sans"
+        android:textColor="#f5f5f5"
+        android:background="@color/text_message"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/textView3"
+        android:typeface="sans"
+        android:textColor="#f5f5f5"
+        android:text="Put your phone somewhere in the car, so it can feel vibrations."
+        android:background="@color/text_message"
+        android:layout_marginTop="20dp"
+        android:layout_below="@+id/textView"
+        android:layout_centerHorizontal="true" />
+
+    <WebView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/webView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignWithParentIfMissing="true"
+        android:visibility="invisible"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+</RelativeLayout>

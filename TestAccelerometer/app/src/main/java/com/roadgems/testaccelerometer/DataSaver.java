@@ -44,7 +44,7 @@ public class DataSaver {
 
             for (int i = 0; i < sensorData.size(); i++) {
                 AccelData current = sensorData.get(i);
-                out.write(current.getTimestamp() -t0Moment + "," + current.coordinates() + "," + current.averages());
+                out.write(current.getTimestamp() - t0Moment + "," + current.coordinates() + "," + current.averages());
                 out.write("\n");
             }
             out.close();

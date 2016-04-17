@@ -8,6 +8,10 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.GeolocationPermissions;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,30 +33,61 @@ public class MainActivity extends Activity {
 
     GPSTracker gps;
     TextView outputView;
-
-
     private ProgressDialog progress;
-
+    WebView myWebView;
+    private boolean mapToggle = false;
+    private boolean saveDataToggle = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         outputView = (TextView) findViewById(R.id.showOutput);
-
-
         startService(new Intent(this, Vibrations.class));
 
+        myWebView = (WebView) findViewById(R.id.webView);
+        myWebView.setVisibility(View.INVISIBLE);
+        WebSettings webSettings = myWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setAppCacheEnabled(true);
+        webSettings.setDatabaseEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setGeolocationEnabled(true);
+        myWebView.setWebChromeClient(new WebChromeClient() {
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                callback.invoke(origin, true, false);
+            }
+        });
     }
 
     public void saveData(View view) {
-        stopService(new Intent(this, Vibrations.class));
+        if (saveDataToggle == true) {
+            Toast.makeText(getApplicationContext(), "Saving data..", Toast.LENGTH_SHORT).show();
+            startService(new Intent(this, Vibrations.class));
+            saveDataToggle = false;
+        } else {
+            saveDataToggle = true;
+            stopService(new Intent(this, Vibrations.class));
+        }
     }
 
     public void displayMap(View view) {
+        if (mapToggle == false) {
+            myWebView.loadUrl("https://roadgems.go.ro/map.html");
+            myWebView.setVisibility(View.VISIBLE);
+            mapToggle = true;
+        } else {
+            myWebView.setVisibility(View.INVISIBLE);
+            mapToggle = false;
+        }
 
-        Intent myIntent = new Intent(view.getContext(), Map.class);
-        startActivityForResult(myIntent, 0);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopService(new Intent(this, Vibrations.class));
+        stopService(new Intent(this, GPSTracker.class));
     }
 
     public void hole(View view) {
@@ -75,11 +110,6 @@ public class MainActivity extends Activity {
             gps.showSettingsAlert();
         }
     }
-
-    public void postData(View view) {
-        //new PostClass(this).execute(String.valueOf(lat), String.valueOf(lng), "Put");
-    }
-
 
     private class PostClass extends AsyncTask<String, Void, Void> {
         private String http = "https://roadgems.go.ro/create_pothole.php";
