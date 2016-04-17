@@ -17,10 +17,11 @@ public class Average {
 
     public void updateAverage(float new_point) {
         total++;
-        avg = (avg + (new_point - avg) / (total));
+        avg = avg + (new_point - avg) / total;
 
         if (Math.abs(new_point - avg) > THRESHOLD)
             outside++;
+
         else outside = (outside < 0) ? 0 : outside--;
 
         if (outside >= 5)

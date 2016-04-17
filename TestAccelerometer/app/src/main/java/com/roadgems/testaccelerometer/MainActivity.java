@@ -59,6 +59,10 @@ public class MainActivity extends Activity {
 
         gps = new GPSTracker(MainActivity.this);
         // check if GPS enabled
+        checkIfGPSEnabled();
+    }
+
+    private void checkIfGPSEnabled() {
         if (gps.canGetLocation()) {
 
             double latitude = gps.getLatitude();
@@ -68,31 +72,9 @@ public class MainActivity extends Activity {
 
             Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
         } else {
-            // can't get location
-            // GPS or Network is not enabled
-            // Ask user to enable GPS/network in settings
             gps.showSettingsAlert();
         }
     }
-
-//    public void gps(View view) {
-//
-//
-//        // check if GPS enabled
-//        if (gps.canGetLocation()) {
-//
-//            double latitude = gps.getLatitude();
-//            double longitude = gps.getLongitude();
-//            new PostClass(this).execute(String.valueOf(latitude), String.valueOf(longitude), "Put");
-//            // \n is for new line
-//            Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
-//        } else {
-//            // can't get location
-//            // GPS or Network is not enabled
-//            // Ask user to enable GPS/network in settings
-//            gps.showSettingsAlert();
-//        }
-//    }
 
     public void postData(View view) {
         //new PostClass(this).execute(String.valueOf(lat), String.valueOf(lng), "Put");

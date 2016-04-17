@@ -42,6 +42,7 @@ public class Vibrations extends Service implements SensorEventListener {
     private Average avg_z = new Average();
     GPSTracker gps;
 
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -51,41 +52,59 @@ public class Vibrations extends Service implements SensorEventListener {
         sensorData = new ArrayList<>();
         started = true;
         filters = new Filter();
-        gps = new GPSTracker(Vibrations.this);
+
+
+
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (started) {
 
-            avg_x.updateAverage(event.values[0]);
-            avg_y.updateAverage(event.values[1]);
-            avg_z.updateAverage(event.values[2]);
 
-            long timestamp = System.currentTimeMillis();
-            AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2],
-                    avg_x.getAverage(), avg_y.getAverage(), avg_z.getAverage(), THRESHOLD);
-            sensorData.add(data);
-            if (Math.abs(event.values[0] - avg_x.getAverage()) > THRESHOLD + 2 ||
-                    Math.abs(event.values[1] - avg_y.getAverage()) > THRESHOLD + 2)
-                gps();
+                gps = new GPSTracker(Vibrations.this);
+
+                avg_x.updateAverage(event.values[0]);
+                avg_y.updateAverage(event.values[1]);
+                avg_z.updateAverage(event.values[2]);
+
+                long timestamp = System.currentTimeMillis();
+
+                AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2],
+                        avg_x.getAverage(), avg_y.getAverage(), avg_z.getAverage(), THRESHOLD);
+
+                sensorData.add(data);
+//                gps=new GPSTracker(Vibrations.this);
+//                gps();
+//                if (Math.abs(event.values[0] - avg_x.getAverage()) > THRESHOLD + 2 ||
+//                        Math.abs(event.values[1] - avg_y.getAverage()) > THRESHOLD + 2) {
+//                    gps();
+//                }
+
         }
+
+
     }
 
+    private  boolean isGPSEnabled(){
+        if(gps.canGetLocation()){
+            return true;
+        }
+        return false;
+    }
 
-    public void gps() {
+    public void gps() throws RuntimeException{
 
-
-        // check if GPS enabled
-        if (gps.canGetLocation()) {
-
+        if(gps.canGetLocation()) {
             double latitude = gps.getLatitude();
             double longitude = gps.getLongitude();
             new PostClass(this).execute(String.valueOf(latitude), String.valueOf(longitude), "Put2");
-            // \n is for new line
-            Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+        }
+        else{
+            gps.showSettingsAlert();
         }
     }
+
 
 
     @Override
