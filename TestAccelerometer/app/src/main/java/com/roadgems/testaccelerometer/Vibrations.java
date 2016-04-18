@@ -30,8 +30,6 @@ import java.util.TimerTask;
 
 public class Vibrations extends Service implements SensorEventListener {
 
-
-    static final double THRESHOLD = 0.8;
     private boolean started = false;
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -42,6 +40,8 @@ public class Vibrations extends Service implements SensorEventListener {
     private GPSTracker gps;
     private Timer timer;
     private boolean holeDetected = false;
+    static final float THRESHOLD = 0.5f;
+
 
     @Override
     public void onCreate() {
@@ -54,26 +54,29 @@ public class Vibrations extends Service implements SensorEventListener {
         gps = new GPSTracker(Vibrations.this);
         timer = new Timer();
 
-        timer.schedule(new HoleTimer(), 0, 2 * 1000); // 2 seconds
+        timer.schedule(new HoleTimer(), 0, 2 * 1000); // 4 seconds
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (started) {
-            avg_x.updateAverage(event.values[0]);
-            avg_y.updateAverage(event.values[1]);
-            avg_z.updateAverage(event.values[2]);
+            float value_x = event.values[0];
+            float value_y = event.values[1];
+            float value_z = event.values[2];
+
+            avg_x.updateAverage(value_x);
+            avg_y.updateAverage(value_y);
+            avg_z.updateAverage(value_z);
 
             long timestamp = System.currentTimeMillis();
 
-            AccelData data = new AccelData(timestamp, event.values[0], event.values[1], event.values[2],
+            AccelData data = new AccelData(timestamp, value_x, value_y, value_z,
                     avg_x.getAverage(), avg_y.getAverage(), avg_z.getAverage(), THRESHOLD);
             sensorData.add(data);
 
-
-            if (Math.abs(event.values[0] - avg_x.getAverage()) > THRESHOLD ||
-                    Math.abs(event.values[1] - avg_y.getAverage()) > THRESHOLD ||
-                    Math.abs(event.values[2] - avg_z.getAverage()) > THRESHOLD)
+            if (avg_x.isLimitExceded(value_x) ||
+                    avg_y.isLimitExceded(value_y) ||
+                    avg_z.isLimitExceded(value_z))
                 holeDetected = true;
         }
     }
