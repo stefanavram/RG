@@ -12,6 +12,7 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,7 +44,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         outputView = (TextView) findViewById(R.id.showOutput);
-        startService(new Intent(this, Vibrations.class));
 
         myWebView = (WebView) findViewById(R.id.webView);
         myWebView.setVisibility(View.INVISIBLE);
@@ -62,12 +62,17 @@ public class MainActivity extends Activity {
 
     public void saveData(View view) {
         if (saveDataToggle == true) {
-            Toast.makeText(getApplicationContext(), "Saving data..", Toast.LENGTH_SHORT).show();
-            startService(new Intent(this, Vibrations.class));
+            Toast.makeText(getApplicationContext(), "Stop detecting..", Toast.LENGTH_SHORT).show();
+            Button btnSave =(Button) findViewById(R.id.btnSave);
+            btnSave.setText("Detect\nPotholes");
+            stopService(new Intent(this, Vibrations.class));
             saveDataToggle = false;
         } else {
+            Toast.makeText(getApplicationContext(), "Detecting potholes..", Toast.LENGTH_SHORT).show();
+            Button btnSave =(Button) findViewById(R.id.btnSave);
+            btnSave.setText("Stop\ndetecting");
             saveDataToggle = true;
-            stopService(new Intent(this, Vibrations.class));
+            startService(new Intent(this, Vibrations.class));
         }
     }
 

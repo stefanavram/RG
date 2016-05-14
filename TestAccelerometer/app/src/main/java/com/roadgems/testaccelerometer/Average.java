@@ -6,33 +6,33 @@ package com.roadgems.testaccelerometer;
 public class Average {
     private double avg;
     private int total;
-    private float outsideCounter;
-    static final float THRESHOLD = 0.5f;
-    private static int outsideCountLimit = 5;
+    private float counter;
+    static final float THRESHOLD =0.8f;
+    //private static int outsideCountLimit = 1000;
 
 
     public Average() {
         this.avg = 0;
         this.total = 0;
-        this.outsideCounter = 0;
+        this.counter = 0;
     }
 
     public void updateAverage(float new_point) {
 
-        if (isLimitExceded(new_point)) {
-            outsideCounter++;
-        } else outsideCounter = (outsideCounter < 0) ? 0 : outsideCounter--;
+//        if (isLimitExceded(new_point)) {
+//            outsideCounter++;
+//        } else outsideCounter = (outsideCounter < 0) ? 0 : outsideCounter--;
 
         total++;
         avg = avg + (new_point - avg) / total;
 
-        if (isOutsideCounterGreater())
-            reset();
+//        if (isOutsideCounterGreater())
+//            reset();
     }
 
-    private boolean isOutsideCounterGreater() {
-        return outsideCounter >= outsideCountLimit;
-    }
+//    private boolean isOutsideCounterGreater() {
+//        return counter >= outsideCountLimit;
+//    }
 
     public double getAverage() {
         return this.avg;
@@ -41,7 +41,7 @@ public class Average {
     public void reset() {
         this.avg = 0;
         this.total = 0;
-        this.outsideCounter = 0;
+        this.counter = 0;
     }
 
     public boolean isLimitExceded(float new_point) {

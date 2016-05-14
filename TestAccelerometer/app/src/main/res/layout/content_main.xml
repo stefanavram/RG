@@ -5,10 +5,18 @@
     android:background="@color/view_bg"
     android:weightSum="1">
 
+    <WebView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/webView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/btnSave"
+        android:visibility="invisible" />
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Save data"
+        android:text="Detect\nPotholes"
         android:id="@+id/btnSave"
         android:layout_gravity="center_horizontal"
         android:onClick="saveData"
@@ -69,7 +77,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_margin="10dp" />
+        android:layout_margin="40dp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -79,18 +87,11 @@
         android:typeface="sans"
         android:textColor="#f5f5f5"
         android:text="Put your phone somewhere in the car, so it can feel vibrations."
+        android:background="@color/text_message"
         android:layout_below="@+id/textView"
-        android:layout_alignRight="@+id/webView"
-        android:layout_alignEnd="@+id/webView"
-        android:layout_margin="10dp"
-        android:background="@color/text_message" />
-
-    <WebView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/webView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_centerHorizontal="true"
-        android:layout_above="@+id/btnSave"
-        android:visibility="invisible" />
+        android:layout_alignLeft="@+id/textView"
+        android:layout_alignStart="@+id/textView"
+        android:layout_alignRight="@+id/textView"
+        android:layout_alignEnd="@+id/textView" />
 
 </RelativeLayout>

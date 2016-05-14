@@ -40,7 +40,7 @@ public class Vibrations extends Service implements SensorEventListener {
     private GPSTracker gps;
     private Timer timer;
     private boolean holeDetected = false;
-    static final float THRESHOLD = 0.5f;
+    static final float THRESHOLD = 0.8f;
 
 
     @Override
@@ -54,7 +54,7 @@ public class Vibrations extends Service implements SensorEventListener {
         gps = new GPSTracker(Vibrations.this);
         timer = new Timer();
 
-        timer.schedule(new HoleTimer(), 0, 2 * 1000); // 4 seconds
+        timer.schedule(new HoleTimer(), 0, 1000); //every 1 second check for hole
     }
 
     @Override
