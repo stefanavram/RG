@@ -80,9 +80,7 @@ public class DetectActivity {
 		
 	}
 	//----------------------------------------------------------------------------------------------------------------------
-	// Computes the features as described in:
-	// [1] Kwapisz, Jennifer R., Gary M. Weiss, and Samuel A. Moore. "Activity recognition using cell phone accelerometers." 
-	//     ACM SIGKDD Explorations Newsletter 12.2 (2011): 74-82.
+
 	public float[] computeFeatures(){
 		int length = x.length;
 		double  xavg, yavg, zavg, xstd, ystd, zstd, xabs, yabs, zabs, avgres;
@@ -175,23 +173,7 @@ public class DetectActivity {
 	}
 
 	// Extension to use the SVM as the classifier by a process of training. 
-/*	
-	public void trainSVM(){
-		Mat responses = new Mat(1, sizeOfDataset, CvType.CV_32F);
-		responses.put(0, 0, labelArray); 
-		
-		CvSVM svm = new CvSVM();
-		CvSVMParams params = new CvSVMParams();
-		params.set_svm_type(CvSVM.C_SVC);
-		params.set_kernel_type(CvSVM.LINEAR);
-		params.set_term_crit(new TermCriteria(TermCriteria.EPS, 100, 1e-6)); // use TermCriteria.COUNT for speed
 
-		svm.train_auto(trainData, responses, new Mat(), new Mat(), params);
-		
-		File datasetFile = new File(Environment.getExternalStorageDirectory(), "dataset.xml");
-		svm.save(datasetFile.getAbsolutePath());		
-	}
-*/
 	public double[][] createTrainingDataMat(){
 		double trainMat[][] = new double[][]{		   
 								  {0.07,0.09,0.14,0,0.18,0.21,0,0.17,0.06,0.11,0.1,0.08,0,0,0.2,0,0,0.34,0.13,0.16,0.03,0.02,0,0.08,0.21,0,0.29,0.23,0.1,0.06,0,9.3,1.15,3.2,0.05,0.04,3.21,0.08,3.21,9.9},
@@ -208,19 +190,7 @@ public class DetectActivity {
 		
 		
 	//----------------------------------------------------------------------------------
-		// Code to include user generated data also into the training matrix if needed
-		//int rows = 2;
-		//int cols = 40;
-		
-		/*	for(int j = 0; j < cols; j++){
-				trainMat[1][j] = feat[j];
-			}
-	
-		for(int i = 0; i < rows; i++){
-			for(int j = 0; j < cols; j++){
-				trainData.put(i+1, j+1, (float)trainMat[i][j]);
-			}
-		}*/
+
 		
 		return trainMat;
 	}

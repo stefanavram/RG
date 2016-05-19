@@ -94,4 +94,34 @@
         android:layout_above="@+id/btnSave"
         android:visibility="invisible" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/activityText"
+        android:layout_centerVertical="true"
+        android:layout_alignRight="@+id/textView3"
+        android:layout_alignEnd="@+id/textView3"
+        android:layout_alignLeft="@+id/textView3"
+        android:layout_alignStart="@+id/textView3"
+        android:textAlignment="center"
+        android:hint="Prediction Result" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="START "
+        android:id="@+id/startSensor"
+        android:layout_below="@+id/activityText"
+        android:layout_toLeftOf="@+id/hole"
+        android:layout_toStartOf="@+id/hole"
+        android:layout_marginTop="37dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TEST"
+        android:id="@+id/testButton"
+        android:layout_alignBottom="@+id/startSensor"
+        android:layout_centerHorizontal="true" />
+
 </RelativeLayout>

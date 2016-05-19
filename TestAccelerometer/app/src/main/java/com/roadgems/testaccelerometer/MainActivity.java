@@ -5,8 +5,14 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.View;
 import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
@@ -16,8 +22,13 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.common.primitives.Floats;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,9 +39,13 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements View.OnClickListener {
 
     GPSTracker gps;
     TextView outputView;
@@ -39,6 +54,52 @@ public class MainActivity extends Activity {
     private boolean mapToggle = false;
     private boolean saveDataToggle = false;
 
+    /*------openCV fields------*/
+    DetectActivity act;
+	TextView resultText;
+    private static final String TAG = "RoadGems::Activity";
+	private SensorManager mSensorManager;
+    SensorEventListener accelerationListener;
+    int sensorType1 = Sensor.TYPE_ACCELEROMETER;
+    int sensorType2 = Sensor.TYPE_MAGNETIC_FIELD;
+    float x = 0, y = 0, z = 0;
+    List<Float> accData;
+    private List<Float> accX; 
+	private List<Float> accY;
+	private List<Float> accZ;
+    long timeStamp;
+    List<Long> time;
+    long totalTime = 5000;
+    float label;
+    Toast t;
+    Button start;
+    Button test;
+    private boolean holeDetected = false;
+
+    /*-----------end------------*/
+    
+    
+    /*----------*/
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+                    Log.i(TAG, "OpenCV loaded successfully");
+                 // initialize the activity detection class.
+                    act = new DetectActivity();
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
+    private Timer timer;
+    /*----------*/
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +119,23 @@ public class MainActivity extends Activity {
                 callback.invoke(origin, true, false);
             }
         });
+        
+        /*----------*/
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        resultText = (TextView) findViewById(R.id.activityText);
+        
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
+        
+        start=(Button)findViewById(R.id.startSensor);
+        start.setOnClickListener(this);
+        
+        test=(Button)findViewById(R.id.testButton);
+        test.setOnClickListener(this);
+        /*----------*/
+        timer = new Timer();
+        timer.schedule(new HoleTimer(), 0, 1000);
+        gps = new GPSTracker(MainActivity.this);
+
     }
 
     public void saveData(View view) {
@@ -94,7 +172,35 @@ public class MainActivity extends Activity {
         stopService(new Intent(this, Vibrations.class));
         stopService(new Intent(this, GPSTracker.class));
     }
+    
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+        
+     @Override
+    protected void onPause() {
+        mSensorManager.unregisterListener(accelerationListener);
+        super.onPause();
+    }   
 
+    @Override
+	public void onClick(View v) {
+		// TODO Auto-generated method stub
+		if(v == start){
+			startRecording();
+			mTimer.start();
+		}else if(v == test){
+			if(accX!=null && accY!=null && accZ!=null)
+				startDetecting();
+			else{
+				t = Toast.makeText(this, "No data to be processed", Toast.LENGTH_SHORT);
+				t.show();
+			}
+		}
+	}
+    
+    
     public void hole(View view) {
 
         gps = new GPSTracker(MainActivity.this);
@@ -115,7 +221,99 @@ public class MainActivity extends Activity {
             gps.showSettingsAlert();
         }
     }
+    
+    /*-----------------*/
+    private final CountDownTimer mTimer = new CountDownTimer(totalTime, 1000) {
+		@Override
+		public void onTick(final long millisUntilFinished) {
+		}
+		@Override
+		public void onFinish() {
+			stopRecording();
+		}
+    };
+    
+    public void startRecording(){
+		time = new ArrayList<Long>();
+		accX = new ArrayList<Float>();
+		accY =new ArrayList<Float>();
+		accZ = new ArrayList<Float>();
+		accData = new ArrayList<Float>();
+		accelerationListener = new SensorEventListener() {
+	    	
+	    	@Override    
+	        public void onSensorChanged(SensorEvent event) {
+	            float accMag = 0;
+	           
+	            if(event.sensor.getType()==Sensor.TYPE_ACCELEROMETER){
+	            x = event.values[0];
+	            y = event.values[1];
+	            z = event.values[2];
+	            timeStamp = event.timestamp;
+            	time.add(timeStamp);
+	            float sum = (float) (Math.pow(x, 2)+Math.pow(y, 2)+Math.pow(z, 2));
+            	accMag = (float) (Math.sqrt(sum)-9.8); 
+            	accData.add(accMag);
+            	accX.add(x);
+            	accY.add(y);
+            	accZ.add(z);
+            	
+	           }
+	    }
+	    	@Override
+	        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+	        }
+	    };
+	    
+        mSensorManager.registerListener(accelerationListener,mSensorManager.getDefaultSensor(sensorType1),
+            SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(accelerationListener,mSensorManager.getDefaultSensor(sensorType2),
+                SensorManager.SENSOR_DELAY_FASTEST);
+	}
+    
+    public void stopRecording(){
+		mSensorManager.unregisterListener(accelerationListener);
+		
+	}
+    
+    public void startDetecting(){
+		float[] x = Floats.toArray(accX);
+		float[] y = Floats.toArray(accY);
+		float[] z = Floats.toArray(accZ);
+		float[] mag = Floats.toArray(accData);
 
+		 
+		float actdetected = act.detect(x, y, z, mag, label);
+		if(actdetected == 0)
+			resultText.setText("Activity Detected: Sitting");
+		else if(actdetected == 1) {
+            resultText.setText("Activity Detected: Jogging");
+            holeDetected=true;
+
+        }
+		else
+			resultText.setText("Unknown Activity!");
+		Toast toast1 = Toast.makeText(this, "Done!", Toast.LENGTH_SHORT);
+		toast1.show();
+	}
+    /*-----------------*/
+
+    private class HoleTimer extends TimerTask {
+        public void run() {
+            if (holeDetected) {
+                if (gps.canGetLocation()) {
+
+                    double latitude = gps.getLatitude();
+                    double longitude = gps.getLongitude();
+
+                    new PostClass(MainActivity.this).execute(String.valueOf(latitude), String.valueOf(longitude), String.valueOf(System.currentTimeMillis()));
+                }
+                holeDetected = false;
+            }
+        }
+    }
+
+    
     private class PostClass extends AsyncTask<String, Void, Void> {
         private String http = "https://roadgems.go.ro/create_pothole.php";
         private final Context context;
