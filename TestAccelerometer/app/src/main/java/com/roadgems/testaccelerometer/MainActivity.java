@@ -75,7 +75,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     Button start;
     Button test;
     private boolean holeDetected = false;
-
+    private Timer timer;
     /*-----------end------------*/
     
     
@@ -97,7 +97,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         }
     };
-    private Timer timer;
+
     /*----------*/
     
     @Override
@@ -205,10 +205,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         gps = new GPSTracker(MainActivity.this);
         // check if GPS enabled
-        checkIfGPSEnabled();
+        markHole();
     }
 
-    private void checkIfGPSEnabled() {
+    private void markHole() {
         if (gps.canGetLocation()) {
 
             double latitude = gps.getLatitude();
@@ -284,12 +284,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
 		 
 		float actdetected = act.detect(x, y, z, mag, label);
-		if(actdetected == 0)
-			resultText.setText("Activity Detected: Sitting");
+		if(actdetected == 0) {
+            resultText.setText("Activity Detected: Sitting");
+
+        }
 		else if(actdetected == 1) {
             resultText.setText("Activity Detected: Jogging");
-            holeDetected=true;
-
+            markHole();
         }
 		else
 			resultText.setText("Unknown Activity!");
@@ -313,20 +314,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    
+
     private class PostClass extends AsyncTask<String, Void, Void> {
         private String http = "https://roadgems.go.ro/create_pothole.php";
         private final Context context;
+
 
         public PostClass(Context c) {
             this.context = c;
         }
 
-        protected void onPreExecute() {
-            progress = new ProgressDialog(this.context);
-            progress.setMessage("Loading");
-            progress.show();
-        }
 
         public String createPostParamsFromJson(JSONObject jsonobj) {
             StringBuilder postData = new StringBuilder();
@@ -400,13 +397,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                 output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
 
-                MainActivity.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        outputView.setText(output);
-                        progress.dismiss();
-                    }
-                });
 
             } catch (MalformedURLException e) {
                 // TODO Auto-generated catch block
