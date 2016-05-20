@@ -139,6 +139,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     public void saveData(View view) {
+        hidePredictionUI();
         if (saveDataToggle == true) {
             Toast.makeText(getApplicationContext(), "Stop detecting..", Toast.LENGTH_SHORT).show();
             Button btnSave =(Button) findViewById(R.id.btnSave);
@@ -155,6 +156,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     public void displayMap(View view) {
+        hidePredictionUI();
         if (mapToggle == false) {
             myWebView.loadUrl("https://roadgems.go.ro/map.html");
             myWebView.setVisibility(View.VISIBLE);
@@ -203,6 +205,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     
     public void hole(View view) {
 
+        hidePredictionUI();
         gps = new GPSTracker(MainActivity.this);
         // check if GPS enabled
         markHole();
@@ -298,6 +301,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		toast1.show();
 	}
     /*-----------------*/
+
+    private void hidePredictionUI(){
+        resultText.setVisibility(View.GONE);
+        start.setVisibility(View.GONE);
+        test.setVisibility(View.GONE);
+    }
+
 
     private class HoleTimer extends TimerTask {
         public void run() {

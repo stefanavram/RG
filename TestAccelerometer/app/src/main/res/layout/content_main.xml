@@ -104,24 +104,34 @@
         android:layout_alignLeft="@+id/textView3"
         android:layout_alignStart="@+id/textView3"
         android:textAlignment="center"
-        android:hint="Prediction Result" />
+        android:hint="Prediction Result"
+        android:textColor="@color/white"
+        android:background="@color/btn_bg"
+        android:textColorHint="@color/white"
+        android:textSize="18dp"
+        android:textStyle="bold|italic" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="START "
         android:id="@+id/startSensor"
+        android:layout_marginTop="38dp"
+        android:background="@color/btn_bg"
+        android:textColor="@color/white"
         android:layout_below="@+id/activityText"
-        android:layout_toLeftOf="@+id/hole"
-        android:layout_toStartOf="@+id/hole"
-        android:layout_marginTop="37dp" />
+        android:layout_toLeftOf="@+id/showOutput"
+        android:layout_toStartOf="@+id/showOutput" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="TEST"
         android:id="@+id/testButton"
-        android:layout_alignBottom="@+id/startSensor"
-        android:layout_centerHorizontal="true" />
+        android:background="@color/btn_bg"
+        android:textColor="@color/white"
+        android:layout_alignTop="@+id/startSensor"
+        android:layout_toRightOf="@+id/showOutput"
+        android:layout_toEndOf="@+id/showOutput" />
 
 </RelativeLayout>
